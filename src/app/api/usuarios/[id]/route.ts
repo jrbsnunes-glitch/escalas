@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { recusarSeNaoAdmin } from "@/lib/acesso";
+import { recusarSeNaoAdmin, validarSessaoApi } from "@/lib/acesso";
 import { ehPerfilUsuario } from "@/lib/types";
 import { includeUsuario, serializarUsuario } from "@/lib/usuario";
 
@@ -18,8 +18,10 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { sessao, resposta } = await recusarSeNaoAdmin();
-  if (resposta || !sessao) return resposta;
+  const auth = await recusarSeNaoAdmin();
+  const gate = validarSessaoApi(auth.resposta, auth.sessao);
+  if (!gate.ok) return gate.resposta;
+  const sessao = gate.sessao;
 
   const { id } = await params;
   const atual = await prisma.usuario.findUnique({
@@ -69,8 +71,10 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { sessao, resposta } = await recusarSeNaoAdmin();
-  if (resposta || !sessao) return resposta;
+  const auth = await recusarSeNaoAdmin();
+  const gate = validarSessaoApi(auth.resposta, auth.sessao);
+  if (!gate.ok) return gate.resposta;
+  const sessao = gate.sessao;
 
   const { id } = await params;
   const atual = await prisma.usuario.findUnique({

@@ -5,6 +5,7 @@ import {
   membroPodeVerEscala,
   recusarSeNaoAdmin,
   recusarSeNaoAutenticado,
+  validarSessaoApi,
 } from "@/lib/acesso";
 import { includeEscala, serializarEscala } from "@/lib/serializers";
 import { configPadrao, recalcularBloco } from "@/lib/algoritmo";
@@ -17,8 +18,10 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { sessao, resposta } = await recusarSeNaoAutenticado();
-  if (resposta || !sessao) return resposta;
+  const auth = await recusarSeNaoAutenticado();
+  const gate = validarSessaoApi(auth.resposta, auth.sessao);
+  if (!gate.ok) return gate.resposta;
+  const sessao = gate.sessao;
 
   const { id } = await params;
   dispararLimpezaArquivos((await cookies()).get(COOKIE_FUSO)?.value);

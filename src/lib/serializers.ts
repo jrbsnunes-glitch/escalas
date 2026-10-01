@@ -1,32 +1,9 @@
-import type {
-  Escala,
-  Bloco,
-  Alocacao,
-  Integrante,
-  Funcao,
-  Musica,
-  ArquivoEscala,
-} from "@prisma/client";
+import type { Funcao, Integrante, Prisma } from "@prisma/client";
 import { serializarMusica } from "./musica";
 import type { ConfigGeracao, EscalaDetalhe, IntegranteResumo, SessaoEscala } from "./types";
 
 type IntegranteComFuncoes = Integrante & {
   funcoes: { funcao: Funcao }[];
-};
-
-type AlocacaoCompleta = Alocacao & {
-  integrante: IntegranteComFuncoes;
-  funcao: Funcao | null;
-  musica: Musica | null;
-};
-
-type BlocoCompleto = Bloco & {
-  alocacoes: AlocacaoCompleta[];
-};
-
-type EscalaCompleta = Escala & {
-  blocos: BlocoCompleto[];
-  arquivos?: ArquivoEscala[];
 };
 
 export function serializarIntegrante(integrante: IntegranteComFuncoes) {
@@ -49,7 +26,26 @@ export function serializarIntegrante(integrante: IntegranteComFuncoes) {
   };
 }
 
-export function serializarEscala(escala: EscalaCompleta): EscalaDetalhe {
+export const includeEscala = {
+  arquivos: { orderBy: [{ ordem: "asc" as const }, { createdAt: "asc" as const }] },
+  blocos: {
+    include: {
+      alocacoes: {
+        include: {
+          integrante: { include: { funcoes: { include: { funcao: true } } } },
+          funcao: true,
+          musica: true,
+        },
+      },
+    },
+  },
+} satisfies Prisma.EscalaInclude;
+
+export type EscalaComInclude = Prisma.EscalaGetPayload<{
+  include: typeof includeEscala;
+}>;
+
+export function serializarEscala(escala: EscalaComInclude): EscalaDetalhe {
   let criterios: ConfigGeracao | null = null;
   let avisos: string[] = [];
 
@@ -124,17 +120,3 @@ export function serializarEscala(escala: EscalaCompleta): EscalaDetalhe {
   };
 }
 
-export const includeEscala = {
-  arquivos: { orderBy: [{ ordem: "asc" as const }, { createdAt: "asc" as const }] },
-  blocos: {
-    include: {
-      alocacoes: {
-        include: {
-          integrante: { include: { funcoes: { include: { funcao: true } } } },
-          funcao: true,
-          musica: true,
-        },
-      },
-    },
-  },
-} as const;

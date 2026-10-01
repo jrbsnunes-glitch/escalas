@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import {
   recusarSeNaoAdmin,
   recusarSeNaoAutenticado,
+  validarSessaoApi,
 } from "@/lib/acesso";
 import {
   ehAlocacaoMusico,
@@ -13,8 +14,10 @@ import {
 } from "@/lib/troca";
 
 export async function GET() {
-  const { sessao, resposta } = await recusarSeNaoAutenticado();
-  if (resposta || !sessao) return resposta;
+  const auth = await recusarSeNaoAutenticado();
+  const gate = validarSessaoApi(auth.resposta, auth.sessao);
+  if (!gate.ok) return gate.resposta;
+  const sessao = gate.sessao;
 
   const pedidos = await prisma.pedidoTroca.findMany({
     where:
@@ -31,8 +34,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { sessao, resposta } = await recusarSeNaoAutenticado();
-  if (resposta || !sessao) return resposta;
+  const auth = await recusarSeNaoAutenticado();
+  const gate = validarSessaoApi(auth.resposta, auth.sessao);
+  if (!gate.ok) return gate.resposta;
+  const sessao = gate.sessao;
 
   const corpo = await request.json().catch(() => null);
   const alocacaoId = String(corpo?.alocacaoId ?? "").trim();

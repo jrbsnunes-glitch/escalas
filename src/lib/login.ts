@@ -1,3 +1,4 @@
+import type { Integrante, Usuario } from "@prisma/client";
 import { prisma } from "./prisma";
 
 export function normalizarNomeLogin(nome: string) {
@@ -9,7 +10,13 @@ export function emailInterno(integranteId: string) {
   return `${integranteId}@interno.escalas`;
 }
 
-export async function buscarUsuarioPorLogin(nomeInformado: string) {
+export type ResultadoBuscaLogin =
+  | { erro: string }
+  | { usuario: Usuario; integrante: Integrante };
+
+export async function buscarUsuarioPorLogin(
+  nomeInformado: string,
+): Promise<ResultadoBuscaLogin> {
   const alvo = normalizarNomeLogin(nomeInformado);
   if (!alvo) return { erro: "Informe usuário e senha." };
 

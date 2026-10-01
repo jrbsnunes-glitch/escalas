@@ -31,6 +31,30 @@ export async function recusarSeNaoAutenticado() {
   return { sessao, resposta: null };
 }
 
+export function responderSeSemSessao(
+  resposta: NextResponse | null,
+  sessao: Sessao | null,
+) {
+  if (resposta) return resposta;
+  if (!sessao) {
+    return NextResponse.json({ erro: "Não autenticado." }, { status: 401 });
+  }
+  return null;
+}
+
+export type ResultadoSessaoApi =
+  | { ok: false; resposta: NextResponse }
+  | { ok: true; sessao: Sessao };
+
+export function validarSessaoApi(
+  resposta: NextResponse | null,
+  sessao: Sessao | null,
+): ResultadoSessaoApi {
+  const bloqueio = responderSeSemSessao(resposta, sessao);
+  if (bloqueio) return { ok: false, resposta: bloqueio };
+  return { ok: true, sessao: sessao! };
+}
+
 export async function recusarSeNaoAdmin() {
   const { sessao, resposta } = await recusarSeNaoAutenticado();
   if (resposta || !sessao) {
