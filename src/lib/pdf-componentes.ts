@@ -69,8 +69,9 @@ function escreverSecao(
   largura: number,
 ) {
   let y = yInicial;
-  const colNome = margem;
-  const colFuncao = margem + 62;
+  const colNum = margem;
+  const colNome = margem + 12;
+  const colFuncao = margem + 64;
   const colNasc = margem + 148;
   const larguraFuncao = colNasc - colFuncao - 4;
 
@@ -90,6 +91,7 @@ function escreverSecao(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.setTextColor(90, 96, 90);
+  doc.text("Nº", colNum, y);
   doc.text("Nome", colNome, y);
   doc.text("Função", colFuncao, y);
   doc.text("Nascimento", colNasc, y);
@@ -108,7 +110,7 @@ function escreverSecao(
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  linhas.forEach((item) => {
+  linhas.forEach((item, indice) => {
     const funcaoTexto =
       item.funcoes.length > 0 ? item.funcoes.join(", ") : "—";
     const funcaoLinhas = doc.splitTextToSize(funcaoTexto, larguraFuncao);
@@ -118,6 +120,11 @@ function escreverSecao(
       doc.addPage();
       y = 22;
     }
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(90, 96, 90);
+    doc.text(String(indice + 1), colNome - 2, y, { align: "right" });
 
     doc.setTextColor(20, 24, 22);
     doc.setFont("courier", "bold");
