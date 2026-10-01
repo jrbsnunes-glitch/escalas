@@ -1,11 +1,13 @@
+import { ImprimirComponentes } from "@/components/ImprimirComponentes";
 import { ListaComponentes } from "@/components/ListaComponentes";
 import { BotaoLink, Empty, PageHeader } from "@/components/ui";
 import { deveMostrarParametrosVoz } from "@/lib/integrante";
 import { prisma } from "@/lib/prisma";
-import { exigirAdmin } from "@/lib/acesso";
+import { ehAdmin, exigirAdmin } from "@/lib/acesso";
 
 export default async function CantoresPage() {
-  await exigirAdmin();
+  const sessao = await exigirAdmin();
+  const admin = ehAdmin(sessao);
   const cantores = await prisma.integrante.findMany({
     include: { funcoes: { include: { funcao: true } } },
     orderBy: [{ ativo: "desc" }, { nome: "asc" }],
@@ -16,7 +18,25 @@ export default async function CantoresPage() {
       <PageHeader
         titulo="Componentes"
         descricao="Quem canta e toca no ministério. Inative quem não entra na escala; o cadastro continua salvo."
-        acao={<BotaoLink href="/cantores/novo">Novo componente</BotaoLink>}
+        acao={
+          <div className="flex flex-wrap items-center gap-2">
+            {admin && cantores.length > 0 ? (
+              <ImprimirComponentes
+                admin
+                componentes={cantores.map((cantor) => ({
+                  nome: cantor.nome,
+                  funcoes: cantor.funcoes.map((item) => item.funcao.nome),
+                  nascimento: cantor.nascimento
+                    ? cantor.nascimento.toISOString().slice(0, 10)
+                    : null,
+                  perfil: cantor.perfil,
+                  ativo: cantor.ativo,
+                }))}
+              />
+            ) : null}
+            <BotaoLink href="/cantores/novo">Novo componente</BotaoLink>
+          </div>
+        }
       />
 
       {cantores.length === 0 ? (
