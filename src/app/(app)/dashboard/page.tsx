@@ -4,14 +4,21 @@ import { BotaoLink, Card, PageHeader } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import { cabecalhoEscala } from "@/lib/escala";
 import { exigirAdmin } from "@/lib/acesso";
+import { contagemComponentesAtivos } from "@/lib/integrante";
 import { cookies } from "next/headers";
 import { COOKIE_FUSO, dispararLimpezaArquivos } from "@/lib/limpeza-arquivos";
 
 export default async function DashboardPage() {
   await exigirAdmin();
   dispararLimpezaArquivos((await cookies()).get(COOKIE_FUSO)?.value);
-  const [cantores, escalas, especiais, pendentesTroca] = await Promise.all([
-    prisma.integrante.count({ where: { ativo: true } }),
+  const [integrantesAtivos, escalas, especiais, pendentesTroca] = await Promise.all([
+    prisma.integrante.findMany({
+      where: { ativo: true },
+      select: {
+        perfil: true,
+        funcoes: { select: { funcao: { select: { nome: true } } } },
+      },
+    }),
     prisma.escala.findMany({
       where: { especial: false },
       orderBy: { data: "desc" },
@@ -26,6 +33,8 @@ export default async function DashboardPage() {
     }),
     prisma.pedidoTroca.count({ where: { status: "PENDENTE" } }),
   ]);
+
+  const componentes = contagemComponentesAtivos(integrantesAtivos);
 
   return (
     <>
@@ -54,7 +63,21 @@ export default async function DashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <p className="text-xs uppercase tracking-wide text-muted">Componentes ativos</p>
-          <p className="mt-2 font-display text-4xl">{cantores}</p>
+          <p className="mt-2 font-display text-4xl">{componentes.total}</p>
+          <dl className="mt-3 space-y-1.5 border-t border-line pt-3 text-sm">
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="text-muted">Cantores</dt>
+              <dd className="font-medium tabular-nums">{componentes.cantores}</dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="text-muted">Músicos</dt>
+              <dd className="font-medium tabular-nums">{componentes.musicos}</dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="text-muted">Engenheiros de som</dt>
+              <dd className="font-medium tabular-nums">{componentes.engenheirosSom}</dd>
+            </div>
+          </dl>
         </Card>
         <Card>
           <p className="text-xs uppercase tracking-wide text-muted">Escalas salvas</p>
