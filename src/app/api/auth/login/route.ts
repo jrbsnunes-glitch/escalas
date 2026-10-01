@@ -2,28 +2,30 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { AUTH_COOKIE, assinarSessao, opcoesCookieSessao } from "@/lib/auth";
+import { buscarUsuarioPorLogin } from "@/lib/login";
 import { ehPerfilUsuario } from "@/lib/types";
 
 export async function POST(request: Request) {
   const corpo = await request.json().catch(() => null);
-  const email = String(corpo?.email ?? "")
-    .trim()
-    .toLowerCase();
+  const usuarioInformado = String(corpo?.usuario ?? corpo?.nome ?? "").trim();
   const senha = String(corpo?.senha ?? "");
 
-  if (!email || !senha) {
+  if (!usuarioInformado || !senha) {
     return NextResponse.json(
-      { erro: "Informe e-mail e senha." },
+      { erro: "Informe usuário e senha." },
       { status: 400 },
     );
   }
 
-  const usuario = await prisma.usuario.findUnique({
-    where: { email },
-    include: { integrante: true },
-  });
+  const busca = await buscarUsuarioPorLogin(usuarioInformado);
+  if ("erro" in busca) {
+    const status = busca.erro.includes("mais de uma") ? 409 : 401;
+    return NextResponse.json({ erro: busca.erro }, { status });
+  }
+
+  const usuario = { ...busca.usuario, integrante: busca.integrante };
   if (
-    !usuario?.integrante?.ativo ||
+    !usuario.integrante?.ativo ||
     !(await bcrypt.compare(senha, usuario.senha))
   ) {
     return NextResponse.json(

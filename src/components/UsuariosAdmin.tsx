@@ -39,7 +39,6 @@ export function UsuariosAdmin({
 }) {
   const router = useRouter();
   const [integranteId, setIntegranteId] = useState("");
-  const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [perfil, setPerfil] = useState<PerfilUsuario>("MEMBRO");
   const [editandoId, setEditandoId] = useState<string | null>(null);
@@ -59,7 +58,6 @@ export function UsuariosAdmin({
 
   function limpar() {
     setIntegranteId("");
-    setEmail("");
     setSenha("");
     setPerfil("MEMBRO");
     setEditandoId(null);
@@ -69,7 +67,6 @@ export function UsuariosAdmin({
   function comecarEdicao(usuario: Usuario) {
     setEditandoId(usuario.id);
     setIntegranteId(usuario.integranteId);
-    setEmail(usuario.email);
     setSenha("");
     setPerfil(usuario.perfil);
     setErro("");
@@ -87,7 +84,6 @@ export function UsuariosAdmin({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             integranteId,
-            email,
             perfil,
             ...(senha ? { senha } : {}),
           }),
@@ -127,6 +123,10 @@ export function UsuariosAdmin({
 
   return (
     <div className="grid gap-6">
+      <p className="text-sm text-muted">
+        O login no sistema usa o <strong className="text-cream">nome do integrante</strong> (como
+        cadastrado em Componentes) e a senha definida aqui.
+      </p>
       <form onSubmit={salvar} className="grid gap-3 sm:grid-cols-2">
         <Campo label="Cantor ou músico">
           {editando ? (
@@ -147,16 +147,7 @@ export function UsuariosAdmin({
             </select>
           )}
         </Campo>
-        <Campo label="E-mail de acesso">
-          <input
-            className="field"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </Campo>
-        <Campo label={editandoId ? "Nova senha (opcional)" : "Senha"}>
+        <Campo label={editandoId ? "Nova senha (opcional)" : "Senha de acesso"}>
           <input
             className="field"
             type="password"
@@ -213,8 +204,8 @@ export function UsuariosAdmin({
                 )}
               </p>
               <p className="text-sm text-muted">
-                {rotuloMinisterio(usuario.papelMinisterio)} · {usuario.email} ·{" "}
-                {rotuloPerfil(usuario.perfil)}
+                Login: <strong className="text-cream">{usuario.nome}</strong> ·{" "}
+                {rotuloMinisterio(usuario.papelMinisterio)} · {rotuloPerfil(usuario.perfil)}
               </p>
             </div>
             <div className="flex gap-2">

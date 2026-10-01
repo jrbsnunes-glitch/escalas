@@ -118,7 +118,6 @@ function ShellInterno({
           )}
           <div className="rounded-2xl border border-line bg-bg-soft p-3">
             <p className="truncate text-sm font-medium">{sessao.nome}</p>
-            <p className="truncate text-xs text-muted">{sessao.email}</p>
             <p className="mt-1 text-[11px] text-gold">{rotuloPerfil(sessao.perfil)}</p>
             <button
               type="button"

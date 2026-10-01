@@ -15,8 +15,10 @@ npm run dev
 
 Acesse [http://localhost:3000](http://localhost:3000)
 
-- **E-mail:** `admin@escalas.local`
+- **Usuário:** `Jarbas`
 - **Senha:** `admin123`
+
+O administrador libera outros acessos em **Usuários** (nome do integrante + senha).
 
 ## O que o sistema faz
 

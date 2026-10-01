@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { recusarSeNaoAdmin } from "@/lib/acesso";
 import { ehPerfilUsuario } from "@/lib/types";
+import { emailInterno } from "@/lib/login";
 import { includeUsuario, serializarUsuario } from "@/lib/usuario";
 
 export async function GET() {
@@ -11,7 +12,7 @@ export async function GET() {
 
   const usuarios = await prisma.usuario.findMany({
     include: includeUsuario,
-    orderBy: [{ perfil: "asc" }, { email: "asc" }],
+    orderBy: [{ perfil: "asc" }, { integrante: { nome: "asc" } }],
   });
 
   return NextResponse.json({
@@ -25,15 +26,12 @@ export async function POST(request: Request) {
 
   const corpo = await request.json().catch(() => null);
   const integranteId = String(corpo?.integranteId ?? "").trim();
-  const email = String(corpo?.email ?? "")
-    .trim()
-    .toLowerCase();
   const senha = String(corpo?.senha ?? "");
   const perfil = corpo?.perfil;
 
-  if (!integranteId || !email || !senha) {
+  if (!integranteId || !senha) {
     return NextResponse.json(
-      { erro: "Escolha o cantor ou músico, o e-mail e a senha." },
+      { erro: "Escolha o integrante e defina a senha de acesso." },
       { status: 400 },
     );
   }
@@ -64,18 +62,10 @@ export async function POST(request: Request) {
     );
   }
 
-  const emailEmUso = await prisma.usuario.findUnique({ where: { email } });
-  if (emailEmUso) {
-    return NextResponse.json(
-      { erro: "Já existe um acesso com este e-mail." },
-      { status: 409 },
-    );
-  }
-
   const usuario = await prisma.usuario.create({
     data: {
       integranteId,
-      email,
+      email: emailInterno(integranteId),
       senha: await bcrypt.hash(senha, 10),
       perfil,
     },

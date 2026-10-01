@@ -1,7 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-
 const prisma = new PrismaClient();
+
+function emailInterno(integranteId: string) {
+  return `${integranteId}@interno.escalas`;
+}
 
 async function main() {
   const parametros: {
@@ -249,7 +252,7 @@ async function main() {
     await prisma.usuario.create({
       data: {
         integranteId: ids.Jarbas,
-        email: "admin@escalas.local",
+        email: emailInterno(ids.Jarbas),
         senha: senhaAdmin,
         perfil: "ADMIN",
       },
@@ -260,7 +263,7 @@ async function main() {
     await prisma.usuario.create({
       data: {
         integranteId: ids.Neto,
-        email: "membro@escalas.local",
+        email: emailInterno(ids.Neto),
         senha: senhaMembro,
         perfil: "MEMBRO",
       },
@@ -343,7 +346,7 @@ async function main() {
   }
 
   console.log(
-    "Seed concluído. Admin: Jarbas / admin@escalas.local / admin123 · Membro: Neto / membro@escalas.local / membro123",
+    "Seed concluído. Admin: Jarbas / admin123 · Membro: Neto / membro123",
   );
 }
 

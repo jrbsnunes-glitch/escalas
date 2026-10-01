@@ -10,7 +10,7 @@ export default async function UsuariosPage() {
   const [usuarios, integrantes] = await Promise.all([
     prisma.usuario.findMany({
       include: includeUsuario,
-      orderBy: [{ perfil: "asc" }, { email: "asc" }],
+      orderBy: [{ perfil: "asc" }, { integrante: { nome: "asc" } }],
     }),
     prisma.integrante.findMany({
       orderBy: { nome: "asc" },
@@ -21,7 +21,7 @@ export default async function UsuariosPage() {
     <>
       <PageHeader
         titulo="Usuários"
-        descricao="O acesso ao sistema é o próprio cantor ou músico. Escolha a pessoa cadastrada, o e-mail, a senha e se ela entra como Administrador ou Membro."
+        descricao="Libere o acesso escolhendo o integrante já cadastrado, definindo a senha e o perfil (Administrador ou Membro). No login, a pessoa usa o nome e a senha."
       />
       <Card>
         <UsuariosAdmin

@@ -31,15 +31,8 @@ export async function PATCH(
   }
 
   const corpo = await request.json().catch(() => null);
-  const email = String(corpo?.email ?? atual.email)
-    .trim()
-    .toLowerCase();
   const senha = corpo?.senha ? String(corpo.senha) : "";
   const perfil = corpo?.perfil ?? atual.perfil;
-
-  if (!email) {
-    return NextResponse.json({ erro: "Informe o e-mail." }, { status: 400 });
-  }
   if (!ehPerfilUsuario(perfil)) {
     return NextResponse.json({ erro: "Informe o perfil de acesso." }, { status: 400 });
   }
@@ -60,20 +53,9 @@ export async function PATCH(
     }
   }
 
-  const conflito = await prisma.usuario.findFirst({
-    where: { email, id: { not: id } },
-  });
-  if (conflito) {
-    return NextResponse.json(
-      { erro: "Já existe um acesso com este e-mail." },
-      { status: 409 },
-    );
-  }
-
   const usuario = await prisma.usuario.update({
     where: { id },
     data: {
-      email,
       perfil,
       ...(senha ? { senha: await bcrypt.hash(senha, 10) } : {}),
     },
