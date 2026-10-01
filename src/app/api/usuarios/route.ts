@@ -68,6 +68,7 @@ export async function POST(request: Request) {
       email: emailInterno(integranteId),
       senha: await bcrypt.hash(senha, 10),
       perfil,
+      primeiroAcesso: true,
     },
     include: includeUsuario,
   });

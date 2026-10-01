@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { AUTH_COOKIE, assinarSessao, opcoesCookieSessao } from "@/lib/auth";
 import { buscarUsuarioPorLogin } from "@/lib/login";
+import { precisaCompletarCadastro } from "@/lib/onboarding";
 import { ehPerfilUsuario } from "@/lib/types";
 
 export async function POST(request: Request) {
@@ -44,7 +45,10 @@ export async function POST(request: Request) {
   };
   const token = await assinarSessao(sessao);
 
-  const resposta = NextResponse.json({ usuario: sessao });
+  const resposta = NextResponse.json({
+    usuario: sessao,
+    precisaCompletarCadastro: await precisaCompletarCadastro(usuario.id),
+  });
   resposta.cookies.set(AUTH_COOKIE, token, opcoesCookieSessao());
   return resposta;
 }

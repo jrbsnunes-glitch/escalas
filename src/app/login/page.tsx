@@ -70,7 +70,11 @@ function LoginForm() {
 
         : "MEMBRO";
 
-      router.replace(destinoAposLogin(perfil, params.get("next")));
+      if (dados.precisaCompletarCadastro) {
+        router.replace("/primeiro-acesso");
+      } else {
+        router.replace(destinoAposLogin(perfil, params.get("next")));
+      }
 
       router.refresh();
 

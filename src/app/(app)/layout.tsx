@@ -2,6 +2,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { obterSessao } from "@/lib/auth";
+import { precisaCompletarCadastro } from "@/lib/onboarding";
 import { ehAdmin } from "@/lib/perfis";
 import { prisma } from "@/lib/prisma";
 import { COOKIE_FUSO, diasAteAniversario, fusoDeCookie } from "@/lib/datas";
@@ -16,6 +17,7 @@ export default async function AppLayout({
 }) {
   const sessao = await obterSessao();
   if (!sessao) redirect("/login");
+  if (await precisaCompletarCadastro(sessao.id)) redirect("/primeiro-acesso");
 
   const pendentesTroca = ehAdmin(sessao)
     ? await prisma.pedidoTroca.count({ where: { status: "PENDENTE" } })

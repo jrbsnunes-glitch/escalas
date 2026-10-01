@@ -124,8 +124,8 @@ export function UsuariosAdmin({
   return (
     <div className="grid gap-6">
       <p className="text-sm text-muted">
-        O login no sistema usa o <strong className="text-cream">nome do integrante</strong> (como
-        cadastrado em Componentes) e a senha definida aqui.
+        O login usa o <strong className="text-cream">nome do integrante</strong> e a senha inicial
+        definida aqui. No primeiro acesso, a pessoa troca a senha e informa a data de nascimento.
       </p>
       <form onSubmit={salvar} className="grid gap-3 sm:grid-cols-2">
         <Campo label="Cantor ou músico">

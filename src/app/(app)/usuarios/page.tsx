@@ -21,7 +21,7 @@ export default async function UsuariosPage() {
     <>
       <PageHeader
         titulo="Usuários"
-        descricao="Libere o acesso escolhendo o integrante já cadastrado, definindo a senha e o perfil (Administrador ou Membro). No login, a pessoa usa o nome e a senha."
+        descricao="Libere o acesso escolhendo o integrante, a senha inicial e o perfil. No primeiro login, a pessoa define a senha definitiva e informa a data de nascimento."
       />
       <Card>
         <UsuariosAdmin

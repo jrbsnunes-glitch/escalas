@@ -8,13 +8,14 @@ datasource db {
 }
 
 model Usuario {
-  id           String     @id @default(cuid())
-  integranteId String     @unique
-  email        String     @unique
-  senha        String
-  perfil       String     @default("MEMBRO")
-  createdAt    DateTime   @default(now())
-  integrante   Integrante @relation(fields: [integranteId], references: [id], onDelete: Cascade)
+  id              String     @id @default(cuid())
+  integranteId    String     @unique
+  email           String     @unique
+  senha           String
+  perfil          String     @default("MEMBRO")
+  primeiroAcesso  Boolean    @default(false)
+  createdAt       DateTime   @default(now())
+  integrante      Integrante @relation(fields: [integranteId], references: [id], onDelete: Cascade)
 }
 
 model Parametro {

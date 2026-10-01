@@ -255,6 +255,7 @@ async function main() {
         email: emailInterno(ids.Jarbas),
         senha: senhaAdmin,
         perfil: "ADMIN",
+        primeiroAcesso: false,
       },
     });
   }
@@ -266,6 +267,7 @@ async function main() {
         email: emailInterno(ids.Neto),
         senha: senhaMembro,
         perfil: "MEMBRO",
+        primeiroAcesso: false,
       },
     });
   }
