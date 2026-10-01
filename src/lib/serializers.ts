@@ -1,0 +1,140 @@
+import type {
+  Escala,
+  Bloco,
+  Alocacao,
+  Integrante,
+  Funcao,
+  Musica,
+  ArquivoEscala,
+} from "@prisma/client";
+import { serializarMusica } from "./musica";
+import type { ConfigGeracao, EscalaDetalhe, IntegranteResumo, SessaoEscala } from "./types";
+
+type IntegranteComFuncoes = Integrante & {
+  funcoes: { funcao: Funcao }[];
+};
+
+type AlocacaoCompleta = Alocacao & {
+  integrante: IntegranteComFuncoes;
+  funcao: Funcao | null;
+  musica: Musica | null;
+};
+
+type BlocoCompleto = Bloco & {
+  alocacoes: AlocacaoCompleta[];
+};
+
+type EscalaCompleta = Escala & {
+  blocos: BlocoCompleto[];
+  arquivos?: ArquivoEscala[];
+};
+
+export function serializarIntegrante(integrante: IntegranteComFuncoes) {
+  return {
+    id: integrante.id,
+    nome: integrante.nome,
+    perfil: (integrante.perfil as IntegranteResumo["perfil"]) || "CANTOR",
+    voz: integrante.voz,
+    afinacao: integrante.afinacao,
+    tipoVoz: integrante.tipoVoz,
+    leadVocal: integrante.leadVocal,
+    backingVocal: integrante.backingVocal,
+    nascimento: integrante.nascimento ? integrante.nascimento.toISOString().slice(0, 10) : "",
+    ativo: integrante.ativo,
+    funcoes: integrante.funcoes.map((item) => ({
+      id: item.funcao.id,
+      nome: item.funcao.nome,
+      grupo: item.funcao.grupo,
+    })),
+  };
+}
+
+export function serializarEscala(escala: EscalaCompleta): EscalaDetalhe {
+  let criterios: ConfigGeracao | null = null;
+  let avisos: string[] = [];
+
+  if (escala.criterios) {
+    try {
+      criterios = JSON.parse(escala.criterios) as ConfigGeracao;
+    } catch {
+      criterios = null;
+    }
+  }
+
+  if (escala.avisos) {
+    try {
+      avisos = JSON.parse(escala.avisos) as string[];
+    } catch {
+      avisos = [];
+    }
+  }
+
+  return {
+    id: escala.id,
+    titulo: escala.titulo,
+    data: escala.data.toISOString(),
+    tipo: escala.tipo as EscalaDetalhe["tipo"],
+    especial: Boolean(escala.especial),
+    quantidadeEscalas: escala.quantidadeEscalas,
+    quantidadePorEscala: escala.quantidadePorEscala,
+    sobra: escala.sobra,
+    criterios,
+    avisos,
+    createdAt: escala.createdAt.toISOString(),
+    arquivos: (escala.arquivos ?? [])
+      .slice()
+      .sort((a, b) => a.ordem - b.ordem)
+      .map((arquivo) => ({
+        id: arquivo.id,
+        nome: arquivo.nome,
+        path: arquivo.path,
+        musicaId: arquivo.musicaId ?? null,
+      })),
+    blocos: escala.blocos
+      .slice()
+      .sort((a, b) => a.ordem - b.ordem)
+      .map((bloco) => ({
+        id: bloco.id,
+        nome: bloco.nome,
+        direcao: bloco.direcao ?? "",
+        ordem: bloco.ordem,
+        temAncora: bloco.temAncora,
+        temHomem: bloco.temHomem,
+        somaAfinacao: bloco.somaAfinacao,
+        mediaAfinacao: bloco.mediaAfinacao,
+        tiposVozDistintos: bloco.tiposVozDistintos,
+        alocacoes: bloco.alocacoes
+          .slice()
+          .sort((a, b) => a.ordem - b.ordem)
+          .map((alocacao) => ({
+            id: alocacao.id,
+            ordem: alocacao.ordem,
+            sessao: (alocacao.sessao as SessaoEscala) || "CANTOR",
+            integrante: serializarIntegrante(alocacao.integrante),
+            funcao: alocacao.funcao
+              ? {
+                  id: alocacao.funcao.id,
+                  nome: alocacao.funcao.nome,
+                  grupo: alocacao.funcao.grupo,
+                }
+              : null,
+            musica: alocacao.musica ? serializarMusica(alocacao.musica) : null,
+          })),
+      })),
+  };
+}
+
+export const includeEscala = {
+  arquivos: { orderBy: [{ ordem: "asc" as const }, { createdAt: "asc" as const }] },
+  blocos: {
+    include: {
+      alocacoes: {
+        include: {
+          integrante: { include: { funcoes: { include: { funcao: true } } } },
+          funcao: true,
+          musica: true,
+        },
+      },
+    },
+  },
+} as const;

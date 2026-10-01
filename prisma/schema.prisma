@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id           String     @id @default(cuid())
+  integranteId String     @unique
+  email        String     @unique
+  senha        String
+  perfil       String     @default("MEMBRO")
+  createdAt    DateTime   @default(now())
+  integrante   Integrante @relation(fields: [integranteId], references: [id], onDelete: Cascade)
+}
+
+model Parametro {
+  id        String  @id @default(cuid())
+  categoria String
+  valor     String
+  rotulo    String
+  ordem     Int     @default(0)
+  ativo     Boolean @default(true)
+  extra     String?
+
+  @@unique([categoria, valor])
+}
+
+model Funcao {
+  id          String             @id @default(cuid())
+  nome        String             @unique
+  grupo       String             @default("MUSICO")
+  ordem       Int                @default(0)
+  ativo       Boolean            @default(true)
+  integrantes IntegranteFuncao[]
+  alocacoes   Alocacao[]
+}
+
+model Integrante {
+  id           String             @id @default(cuid())
+  nome         String
+  perfil       String             @default("CANTOR")
+  voz          String
+  afinacao     Int
+  tipoVoz      String
+  leadVocal    String
+  backingVocal String
+  ativo        Boolean            @default(true)
+  nascimento   DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  funcoes      IntegranteFuncao[]
+  alocacoes    Alocacao[]
+  usuario      Usuario?
+  pedidosFeitos       PedidoTroca[] @relation("PedidoSolicitante")
+  pedidosComoSubstituto PedidoTroca[] @relation("PedidoSubstituto")
+}
+
+model IntegranteFuncao {
+  integranteId String
+  funcaoId     String
+  integrante   Integrante @relation(fields: [integranteId], references: [id], onDelete: Cascade)
+  funcao       Funcao     @relation(fields: [funcaoId], references: [id], onDelete: Cascade)
+
+  @@id([integranteId, funcaoId])
+}
+
+model Escala {
+  id                   String   @id @default(cuid())
+  titulo               String
+  data                 DateTime
+  tipo                 String
+  especial             Boolean  @default(false)
+  quantidadeEscalas    Int?
+  quantidadePorEscala  Int?
+  sobra                String?
+  criterios            String?
+  avisos               String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  blocos               Bloco[]
+  arquivos             ArquivoEscala[]
+}
+
+model Bloco {
+  id                String     @id @default(cuid())
+  escalaId          String
+  nome              String
+  direcao           String     @default("")
+  ordem             Int
+  temAncora         Boolean    @default(true)
+  temHomem          Boolean    @default(true)
+  somaAfinacao      Float      @default(0)
+  mediaAfinacao     Float      @default(0)
+  tiposVozDistintos Int        @default(0)
+  escala            Escala     @relation(fields: [escalaId], references: [id], onDelete: Cascade)
+  alocacoes         Alocacao[]
+}
+
+model Musica {
+  id          String     @id @default(cuid())
+  titulo      String
+  youtubeUrl  String     @default("")
+  arquivoNome String     @default("")
+  arquivoPath String     @default("")
+  ativo       Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  alocacoes   Alocacao[]
+  pedidosTroca PedidoTroca[]
+  arquivosEscala ArquivoEscala[]
+}
+
+model ArquivoEscala {
+  id        String   @id @default(cuid())
+  escalaId  String
+  musicaId  String?
+  nome      String
+  path      String
+  ordem     Int      @default(0)
+  createdAt DateTime @default(now())
+  escala    Escala   @relation(fields: [escalaId], references: [id], onDelete: Cascade)
+  musica    Musica?  @relation(fields: [musicaId], references: [id], onDelete: SetNull)
+}
+
+model Alocacao {
+  id           String     @id @default(cuid())
+  blocoId      String
+  integranteId String
+  funcaoId     String?
+  musicaId     String?
+  sessao       String     @default("CANTOR")
+  ordem        Int        @default(0)
+  bloco        Bloco      @relation(fields: [blocoId], references: [id], onDelete: Cascade)
+  integrante   Integrante @relation(fields: [integranteId], references: [id], onDelete: Restrict)
+  funcao       Funcao?    @relation(fields: [funcaoId], references: [id], onDelete: SetNull)
+  musica       Musica?    @relation(fields: [musicaId], references: [id], onDelete: SetNull)
+  pedidosTroca PedidoTroca[]
+}
+
+model PedidoTroca {
+  id            String     @id @default(cuid())
+  alocacaoId    String
+  solicitanteId String
+  substitutoId  String
+  musicaId      String?
+  status        String     @default("PENDENTE")
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  alocacao      Alocacao   @relation(fields: [alocacaoId], references: [id], onDelete: Cascade)
+  solicitante   Integrante @relation("PedidoSolicitante", fields: [solicitanteId], references: [id], onDelete: Cascade)
+  substituto    Integrante @relation("PedidoSubstituto", fields: [substitutoId], references: [id], onDelete: Restrict)
+  musica        Musica?    @relation(fields: [musicaId], references: [id], onDelete: Restrict)
+}
