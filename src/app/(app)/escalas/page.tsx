@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { RotuloIdEscala } from "@/components/RotuloIdEscala";
 import { BotaoLink, Card, Empty, PageHeader } from "@/components/ui";
 import { EscalaCultos } from "@/components/EscalaCultos";
 import { prisma } from "@/lib/prisma";
@@ -56,6 +57,7 @@ export default async function EscalasPage() {
                   <h2 className="font-display text-2xl">
                     {cabecalhoEscala(escala.titulo, escala.data)}
                   </h2>
+                  <RotuloIdEscala id={escala.id} />
                   <EscalaCultos
                     escala={escala}
                     integranteLogadoId={sessao.integranteId}
@@ -117,8 +119,8 @@ export default async function EscalasPage() {
                       {escala.blocos.reduce((acc, b) => acc + b.alocacoes.length, 0)}{" "}
                       nomes
                     </p>
-                    <p className="mt-1 truncate font-mono text-[11px] text-muted">
-                      {escala.id}
+                    <p className="mt-1 break-all font-mono text-xs text-gold/90">
+                      ID: {escala.id}
                     </p>
                   </div>
                   <span className="text-sm text-gold">Ver e copiar</span>
