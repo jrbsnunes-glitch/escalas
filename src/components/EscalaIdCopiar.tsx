@@ -29,7 +29,7 @@ export function EscalaIdCopiar({ id }: { id: string }) {
         evento.stopPropagation();
         void copiar();
       }}
-      className="inline-flex shrink-0 items-center gap-1 self-start rounded-lg border border-gold/40 bg-bg-elev px-3 py-1.5 text-xs text-gold hover:bg-bg"
+      className="inline-flex shrink-0 items-center gap-1 self-start rounded-lg border border-[#1a2420]/25 bg-[#fffdf8] px-3 py-1.5 text-xs font-semibold text-[#1a2420] hover:bg-white"
     >
       {copiado ? <Check size={14} /> : <Copy size={14} />}
       {copiado ? "Copiado" : "Copiar ID"}
