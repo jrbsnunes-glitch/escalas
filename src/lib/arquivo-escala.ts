@@ -1,5 +1,14 @@
-import { access, mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { createWriteStream, type WriteStream } from "node:fs";
+import {
+  access,
+  appendFile,
+  mkdir,
+  readFile,
+  rm,
+  stat,
+  statfs,
+  writeFile,
+} from "node:fs/promises";
 import path from "node:path";
 import {
   EXTENSOES_ARQUIVO,
@@ -13,27 +22,22 @@ export const PASTA_ESCALAS_PUBLICA = path.join(
   "public",
   "escalas",
 );
-/** Pasta estável no VPS (gravável junto com o app). */
+/** Pasta antiga dentro de public/uploads. */
 export const PASTA_ESCALAS_UPLOAD = path.join(
   process.cwd(),
   "public",
   "uploads",
   "escalas",
 );
-/** Pasta alternativa fora de public. */
+/** Pasta única de gravação (fora de public). */
 export const PASTA_ESCALAS = path.join(process.cwd(), "data", "escalas");
-/** Último recurso, ao lado do SQLite (em geral gravável no VPS). */
+/** Pasta antiga ao lado do SQLite. */
 export const PASTA_ESCALAS_PRISMA = path.join(
   process.cwd(),
   "prisma",
   "uploads-escalas",
 );
-
-const BASES_GRAVACAO = [
-  PASTA_ESCALAS,
-  PASTA_ESCALAS_UPLOAD,
-  PASTA_ESCALAS_PRISMA,
-];
+const PASTA_TMP_UPLOADS = path.join(process.cwd(), "data", "tmp-uploads");
 
 export function pastaEscala(escalaId: string) {
   return path.join(PASTA_ESCALAS, escalaId);
@@ -115,10 +119,6 @@ export async function apagarPastaEscala(escalaId: string) {
   });
 }
 
-function pastaTmpUpload(uploadId: string) {
-  return path.join(tmpdir(), "escalas-tmp-uploads", idUploadSeguro(uploadId));
-}
-
 export function idUploadSeguro(valor: string) {
   const limpo = valor.replace(/[^a-zA-Z0-9_-]/g, "");
   if (!limpo || limpo.length > 80) {
@@ -127,42 +127,148 @@ export function idUploadSeguro(valor: string) {
   return limpo;
 }
 
+function pastaTmpUpload(uploadId: string) {
+  return path.join(PASTA_TMP_UPLOADS, idUploadSeguro(uploadId));
+}
+
+export async function diagnosticarGravacao() {
+  const pasta = PASTA_ESCALAS;
+  let gravavel = false;
+  let erro: string | null = null;
+  try {
+    await mkdir(pasta, { recursive: true });
+    await mkdir(PASTA_TMP_UPLOADS, { recursive: true });
+    const teste = path.join(pasta, ".write-test");
+    await writeFile(/* turbopackIgnore: true */ teste, "ok");
+    await rm(/* turbopackIgnore: true */ teste, { force: true });
+    gravavel = true;
+  } catch (falha) {
+    erro = falha instanceof Error ? falha.message : "Falha ao gravar.";
+  }
+  let discoLivre: number | null = null;
+  try {
+    const info = await statfs(/* turbopackIgnore: true */ pasta);
+    discoLivre = Number(info.bavail) * Number(info.bsize);
+  } catch {
+    discoLivre = null;
+  }
+  return { ok: gravavel, pasta, discoLivre, erro };
+}
+
+export async function pastaGravacaoEscala(escalaId: string) {
+  const pasta = pastaEscala(escalaId);
+  try {
+    await mkdir(pasta, { recursive: true });
+    return pasta;
+  } catch (falha) {
+    throw new Error(
+      falha instanceof Error
+        ? `Não foi possível gravar em data/escalas: ${falha.message}`
+        : "Não foi possível criar a pasta dos arquivos no servidor.",
+    );
+  }
+}
+
+async function encerrarEscrita(stream: WriteStream) {
+  await new Promise<void>((resolve, reject) => {
+    stream.end((erro: NodeJS.ErrnoException | null | undefined) => {
+      if (erro) reject(erro);
+      else resolve();
+    });
+  });
+}
+
+export async function gravarPedacoDeRequest(
+  uploadId: string,
+  indice: number,
+  request: Request,
+) {
+  if (!request.body) {
+    throw new Error("O envio chegou vazio. A rede cortou o arquivo.");
+  }
+  const pasta = pastaTmpUpload(uploadId);
+  await mkdir(pasta, { recursive: true });
+  const destino = path.join(pasta, `${indice}.part`);
+  const saida = createWriteStream(/* turbopackIgnore: true */ destino);
+  const leitor = request.body.getReader();
+  try {
+    while (true) {
+      const { done, value } = await leitor.read();
+      if (done) break;
+      if (!value?.byteLength) continue;
+      await new Promise<void>((resolve, reject) => {
+        saida.write(value, (erro) => (erro ? reject(erro) : resolve()));
+      });
+    }
+  } catch (falha) {
+    saida.destroy();
+    await rm(/* turbopackIgnore: true */ destino, { force: true });
+    throw falha;
+  }
+  await encerrarEscrita(saida);
+  const { size } = await stat(/* turbopackIgnore: true */ destino);
+  if (!size) {
+    throw new Error("O envio chegou vazio. A rede cortou o arquivo.");
+  }
+  return size;
+}
+
 export async function gravarPedacoUpload(
   uploadId: string,
   indice: number,
   buffer: Buffer,
 ) {
+  if (!buffer.byteLength) {
+    throw new Error("O envio chegou vazio. A rede cortou o arquivo.");
+  }
   const pasta = pastaTmpUpload(uploadId);
   await mkdir(pasta, { recursive: true });
-  await writeFile(path.join(pasta, `${indice}.part`), buffer);
+  await writeFile(/* turbopackIgnore: true */ path.join(pasta, `${indice}.part`), buffer);
 }
 
-export async function montarPedacosUpload(uploadId: string, total: number) {
-  const pasta = pastaTmpUpload(uploadId);
-  const partes: Buffer[] = [];
-  for (let indice = 0; indice < total; indice++) {
-    partes.push(await readFile(path.join(pasta, `${indice}.part`)));
+export async function juntarPedacosEGravar(
+  escalaId: string,
+  uploadId: string,
+  total: number,
+  nomeOriginal: string,
+  musicaId: string | null,
+  ordem: number,
+) {
+  const ext = extensaoArquivo(nomeOriginal);
+  if (!EXTENSOES_ARQUIVO.has(ext)) {
+    throw new Error("Use arquivos mp3, m4a, wav, ogg ou PDF.");
   }
-  await rm(pasta, { recursive: true, force: true });
-  return Buffer.concat(partes);
-}
-
-export async function pastaGravacaoEscala(escalaId: string) {
-  let ultimo: unknown;
-  for (const base of BASES_GRAVACAO) {
-    const pasta = path.join(base, escalaId);
-    try {
-      await mkdir(pasta, { recursive: true });
-      return pasta;
-    } catch (falha) {
-      ultimo = falha;
+  const pasta = await pastaGravacaoEscala(escalaId);
+  const tipo = ext === "pdf" ? "pdf" : "audio";
+  const discoNome = `${Date.now()}-${tipo}-${ordem}-${nomeArquivoSeguro(nomeOriginal)}`;
+  const destino = path.join(pasta, discoNome);
+  const tmp = pastaTmpUpload(uploadId);
+  try {
+    await writeFile(/* turbopackIgnore: true */ destino, Buffer.alloc(0));
+    for (let indice = 0; indice < total; indice++) {
+      const parte = path.join(tmp, `${indice}.part`);
+      await access(/* turbopackIgnore: true */ parte);
+      await appendFile(
+        /* turbopackIgnore: true */ destino,
+        await readFile(/* turbopackIgnore: true */ parte),
+      );
     }
+  } catch (falha) {
+    await rm(/* turbopackIgnore: true */ destino, { force: true });
+    throw falha;
   }
-  throw new Error(
-    ultimo instanceof Error
-      ? `Não foi possível gravar no servidor: ${ultimo.message}`
-      : "Não foi possível criar a pasta dos arquivos no servidor.",
-  );
+  await rm(/* turbopackIgnore: true */ tmp, { recursive: true, force: true });
+  const { size } = await stat(/* turbopackIgnore: true */ destino);
+  if (!size) {
+    throw new Error("O arquivo chegou vazio ao servidor.");
+  }
+  return {
+    nome: nomeOriginal,
+    path: caminhoLogico(escalaId, discoNome),
+    ordem,
+    musicaId,
+    bytes: size,
+  };
 }
 
 export async function gravarBufferEscala(
@@ -179,29 +285,24 @@ export async function gravarBufferEscala(
   if (!EXTENSOES_ARQUIVO.has(ext)) {
     throw new Error("Use arquivos mp3, m4a, wav, ogg ou PDF.");
   }
+  const pasta = await pastaGravacaoEscala(escalaId);
   const tipo = ext === "pdf" ? "pdf" : "audio";
   const discoNome = `${Date.now()}-${tipo}-${ordem}-${nomeArquivoSeguro(nomeOriginal)}`;
-  let ultimo: unknown;
-  for (const base of BASES_GRAVACAO) {
-    const pasta = path.join(base, escalaId);
-    try {
-      await mkdir(pasta, { recursive: true });
-      await writeFile(path.join(pasta, discoNome), buffer);
-      return {
-        nome: nomeOriginal,
-        path: caminhoLogico(escalaId, discoNome),
-        ordem,
-        musicaId,
-      };
-    } catch (falha) {
-      ultimo = falha;
-    }
+  try {
+    await writeFile(/* turbopackIgnore: true */ path.join(pasta, discoNome), buffer);
+  } catch (falha) {
+    throw new Error(
+      falha instanceof Error
+        ? `Falha ao gravar ${nomeOriginal}: ${falha.message}`
+        : `Falha ao gravar ${nomeOriginal} no servidor.`,
+    );
   }
-  throw new Error(
-    ultimo instanceof Error
-      ? `Falha ao gravar ${nomeOriginal}: ${ultimo.message}`
-      : `Falha ao gravar ${nomeOriginal} no servidor.`,
-  );
+  return {
+    nome: nomeOriginal,
+    path: caminhoLogico(escalaId, discoNome),
+    ordem,
+    musicaId,
+  };
 }
 
 export type EnvioArquivoEscala = {

@@ -1,0 +1,33 @@
+# Opção B: membros sem Tailscale.
+# Copie para /etc/nginx/sites-available/escalas e ajuste o domínio.
+# Certificado: certbot --nginx -d escalas.seudominio.com
+#
+# client_max_body_size 30M é obrigatório (o padrão do Nginx é 1M).
+# proxy_request_buffering off evita cortar o MP3 no proxy.
+
+server {
+    listen 443 ssl;
+    server_name escalas.seudominio.com;
+
+    client_max_body_size 30M;
+    client_body_timeout 300s;
+    proxy_request_buffering off;
+    proxy_read_timeout 300s;
+    proxy_send_timeout 300s;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Cookie $http_cookie;
+    }
+}
+
+server {
+    listen 80;
+    server_name escalas.seudominio.com;
+    return 301 https://$host$request_uri;
+}

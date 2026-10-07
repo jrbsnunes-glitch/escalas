@@ -4,10 +4,12 @@ import { recusarSeNaoAdmin } from "@/lib/acesso";
 import { includeEscala, serializarEscala } from "@/lib/serializers";
 import { TAMANHO_MAX_ARQUIVO, TAMANHO_MAX_ARQUIVO_MB } from "@/lib/musica";
 import {
+  diagnosticarGravacao,
   gravarArquivosEscala,
   gravarBufferEscala,
+  gravarPedacoDeRequest,
   gravarPedacoUpload,
-  montarPedacosUpload,
+  juntarPedacosEGravar,
 } from "@/lib/arquivo-escala";
 
 export const runtime = "nodejs";
@@ -39,19 +41,15 @@ async function responderEscala(id: string) {
   return NextResponse.json({ escala: serializarEscala(escala) });
 }
 
-async function finalizarArquivo(
+async function registrarArquivo(
   escalaId: string,
   existente: EscalaComArquivos,
   nomeOriginal: string,
-  buffer: Buffer,
   musicaId: string | null,
+  gravar: (
+    ordem: number,
+  ) => Promise<{ nome: string; path: string; ordem: number; musicaId: string | null }>,
 ) {
-  if (buffer.byteLength > TAMANHO_MAX_ARQUIVO) {
-    return NextResponse.json(
-      { erro: `O arquivo deve ter no máximo ${TAMANHO_MAX_ARQUIVO_MB} MB.` },
-      { status: 400 },
-    );
-  }
   if (musicaId) {
     const musica = await prisma.musica.findUnique({ where: { id: musicaId } });
     if (!musica) {
@@ -61,13 +59,7 @@ async function finalizarArquivo(
       );
     }
   }
-  const criado = await gravarBufferEscala(
-    escalaId,
-    nomeOriginal || "arquivo.mp3",
-    buffer,
-    musicaId,
-    (existente.arquivos[0]?.ordem ?? -1) + 1,
-  );
+  const criado = await gravar((existente.arquivos[0]?.ordem ?? -1) + 1);
   await prisma.arquivoEscala.create({
     data: {
       escalaId,
@@ -80,31 +72,30 @@ async function finalizarArquivo(
   return responderEscala(escalaId);
 }
 
-async function gravarPedacosEFinalizar(
-  escalaId: string,
-  existente: EscalaComArquivos,
-  uploadId: string,
-  chunkIndex: number,
-  totalChunks: number,
-  buffer: Buffer,
-  nomeOriginal: string,
-  musicaId: string | null,
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!Number.isInteger(chunkIndex) || chunkIndex < 0 || totalChunks < 1 || totalChunks > 512) {
-    return NextResponse.json({ erro: "Envio em partes inválido." }, { status: 400 });
+  const { resposta } = await recusarSeNaoAdmin();
+  if (resposta) return resposta;
+
+  const { id } = await params;
+  const existente = await prisma.escala.findUnique({
+    where: { id },
+    select: { id: true },
+  });
+  if (!existente) {
+    return NextResponse.json({ erro: "Escala não encontrada." }, { status: 404 });
   }
-  if (!buffer.byteLength) {
-    return NextResponse.json(
-      { erro: "O envio chegou vazio. A rede cortou o arquivo." },
-      { status: 400 },
-    );
-  }
-  await gravarPedacoUpload(uploadId, chunkIndex, buffer);
-  if (chunkIndex + 1 < totalChunks) {
-    return NextResponse.json({ ok: true, pendente: true });
-  }
-  const montado = await montarPedacosUpload(uploadId, totalChunks);
-  return finalizarArquivo(escalaId, existente, nomeOriginal, montado, musicaId);
+
+  const disco = await diagnosticarGravacao();
+  return NextResponse.json({
+    ok: disco.ok,
+    pasta: disco.pasta,
+    discoLivre: disco.discoLivre,
+    erro: disco.erro,
+    escalaId: id,
+  });
 }
 
 export async function POST(
@@ -128,25 +119,60 @@ export async function POST(
 
   try {
     if (!contentType.includes("multipart/form-data")) {
-      const buffer = Buffer.from(await request.arrayBuffer());
       const uploadId = String(url.searchParams.get("uploadId") ?? "").trim();
       const chunkIndex = Number(url.searchParams.get("chunkIndex"));
       const totalChunks = Number(url.searchParams.get("totalChunks") ?? "1");
       const nomeOriginal = String(url.searchParams.get("nome") ?? "").trim();
       const musicaId = String(url.searchParams.get("musicaId") ?? "").trim() || null;
+
       if (uploadId) {
-        return await gravarPedacosEFinalizar(
+        if (
+          !Number.isInteger(chunkIndex) ||
+          chunkIndex < 0 ||
+          totalChunks < 1 ||
+          totalChunks > 512
+        ) {
+          return NextResponse.json(
+            { erro: "Envio em partes inválido." },
+            { status: 400 },
+          );
+        }
+        await gravarPedacoDeRequest(uploadId, chunkIndex, request);
+        if (chunkIndex + 1 < totalChunks) {
+          return NextResponse.json({ ok: true, pendente: true });
+        }
+        return await registrarArquivo(
           id,
           existente,
-          uploadId,
-          chunkIndex,
-          totalChunks,
-          buffer,
-          nomeOriginal,
+          nomeOriginal || "arquivo.mp3",
           musicaId,
+          (ordem) =>
+            juntarPedacosEGravar(
+              id,
+              uploadId,
+              totalChunks,
+              nomeOriginal || "arquivo.mp3",
+              musicaId,
+              ordem,
+            ),
         );
       }
-      return await finalizarArquivo(id, existente, nomeOriginal, buffer, musicaId);
+
+      const buffer = Buffer.from(await request.arrayBuffer());
+      if (buffer.byteLength > TAMANHO_MAX_ARQUIVO) {
+        return NextResponse.json(
+          { erro: `O arquivo deve ter no máximo ${TAMANHO_MAX_ARQUIVO_MB} MB.` },
+          { status: 400 },
+        );
+      }
+      return await registrarArquivo(
+        id,
+        existente,
+        nomeOriginal || "arquivo.mp3",
+        musicaId,
+        (ordem) =>
+          gravarBufferEscala(id, nomeOriginal || "arquivo.mp3", buffer, musicaId, ordem),
+      );
     }
 
     let form: FormData;
@@ -166,8 +192,12 @@ export async function POST(
       .concat(form.getAll("arquivos"))
       .filter(ehArquivo);
     const musicaIds = form.getAll("musicaId").map((item) => String(item).trim());
-    const uploadId = String(form.get("uploadId") ?? url.searchParams.get("uploadId") ?? "").trim();
-    const chunkIndex = Number(form.get("chunkIndex") ?? url.searchParams.get("chunkIndex"));
+    const uploadId = String(
+      form.get("uploadId") ?? url.searchParams.get("uploadId") ?? "",
+    ).trim();
+    const chunkIndex = Number(
+      form.get("chunkIndex") ?? url.searchParams.get("chunkIndex"),
+    );
     const totalChunks = Number(
       form.get("totalChunks") ?? url.searchParams.get("totalChunks") ?? "0",
     );
@@ -181,15 +211,18 @@ export async function POST(
 
     if (uploadId && Number.isInteger(chunkIndex) && totalChunks > 0) {
       const pedaco = arquivos[0];
-      return await gravarPedacosEFinalizar(
+      await gravarPedacoUpload(uploadId, chunkIndex, await blobParaBuffer(pedaco));
+      if (chunkIndex + 1 < totalChunks) {
+        return NextResponse.json({ ok: true, pendente: true });
+      }
+      const nome = nomeOriginal || pedaco.name || "arquivo.mp3";
+      return await registrarArquivo(
         id,
         existente,
-        uploadId,
-        chunkIndex,
-        totalChunks,
-        await blobParaBuffer(pedaco),
-        nomeOriginal || pedaco.name || "arquivo.mp3",
+        nome,
         musicaIds[0] || null,
+        (ordem) =>
+          juntarPedacosEGravar(id, uploadId, totalChunks, nome, musicaIds[0] || null, ordem),
       );
     }
 

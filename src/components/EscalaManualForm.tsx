@@ -95,6 +95,7 @@ export function EscalaManualForm({
   }
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [progresso, setProgresso] = useState("");
 
   const funcoesMusicos = funcoes.filter((item) => item.grupo === "MUSICO");
   const funcoesCantores = funcoes.filter((item) => item.grupo === "CANTOR");
@@ -201,6 +202,7 @@ export function EscalaManualForm({
       return;
     }
     setEnviando(true);
+    setProgresso("");
     try {
       const resposta = await fetch(
         escalaId ? `/api/escalas/${escalaId}` : "/api/escalas",
@@ -218,7 +220,11 @@ export function EscalaManualForm({
       }
       const idSalvo = String(dados.escala.id);
       if (enviosArquivo.length) {
-        const envio = await enviarArquivosEscala(idSalvo, enviosArquivo);
+        const envio = await enviarArquivosEscala(
+          idSalvo,
+          enviosArquivo,
+          (item) => setProgresso(`Enviando ${item.atual}/${item.total}`),
+        );
         if (!envio.ok) {
           setErro(envio.erro);
           return;
@@ -230,6 +236,7 @@ export function EscalaManualForm({
       router.refresh();
     } finally {
       setEnviando(false);
+      setProgresso("");
     }
   }
 
@@ -438,7 +445,7 @@ export function EscalaManualForm({
       {erro && <p className="text-sm text-danger">{erro}</p>}
       <div className="flex flex-col gap-2 sm:flex-row">
         <Botao type="submit" disabled={enviando}>
-          {enviando ? "Salvando..." : "Salvar escala"}
+          {enviando ? progresso || "Salvando..." : "Salvar escala"}
         </Botao>
         <BotaoLink href={escalaId ? `/escalas/${escalaId}` : "/escalas"} variant="ghost">
           Cancelar

@@ -10,9 +10,11 @@ export function EnviarArquivoEscala({ escalaId }: { escalaId: string }) {
   const [arquivos, setArquivos] = useState<File[]>([]);
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [progresso, setProgresso] = useState("");
 
   async function enviar() {
     setErro("");
+    setProgresso("");
     if (!arquivos.length) {
       setErro("Escolha ao menos um MP3 ou PDF.");
       return;
@@ -22,12 +24,14 @@ export function EnviarArquivoEscala({ escalaId }: { escalaId: string }) {
       const envio = await enviarArquivosEscala(
         escalaId,
         arquivos.map((arquivo) => ({ file: arquivo, musicaId: "" })),
+        (item) => setProgresso(`Enviando ${item.atual}/${item.total}`),
       );
       if (!envio.ok) {
         setErro(envio.erro);
         return;
       }
       setArquivos([]);
+      setProgresso("");
       router.refresh();
     } catch {
       setErro("Não foi possível enviar. Tente de novo.");
@@ -61,7 +65,7 @@ export function EnviarArquivoEscala({ escalaId }: { escalaId: string }) {
         disabled={enviando}
         onClick={() => void enviar()}
       >
-        {enviando ? "Enviando..." : "Enviar arquivos"}
+        {enviando ? progresso || "Enviando..." : "Enviar arquivos"}
       </Botao>
     </div>
   );
