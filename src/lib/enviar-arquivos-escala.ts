@@ -1,6 +1,6 @@
 import { TAMANHO_MAX_ARQUIVO, TAMANHO_MAX_ARQUIVO_MB } from "./musica";
 
-const TAMANHO_PEDACO = 3 * 1024 * 1024;
+const PEDACOS_TENTATIVA = [256 * 1024, 64 * 1024];
 
 export type EnvioArquivoCliente = {
   file: File;
@@ -16,42 +16,75 @@ async function mensagemErro(resposta: Response) {
   if (resposta.status === 413) {
     return "O servidor recusou o tamanho deste envio.";
   }
+  if (resposta.status === 401 || resposta.status === 403) {
+    return "Sessão expirada. Entre de novo e envie o arquivo.";
+  }
   return `A escala foi salva, mas os arquivos não (HTTP ${resposta.status}).`;
 }
 
-async function postFormulario(escalaId: string, form: FormData) {
-  const resposta = await fetch(`/api/escalas/${escalaId}/arquivo`, {
+function idEnvio() {
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+}
+
+async function postPedaco(
+  escalaId: string,
+  envio: EnvioArquivoCliente,
+  uploadId: string,
+  indice: number,
+  total: number,
+  pedaco: Blob,
+) {
+  const params = new URLSearchParams({
+    uploadId,
+    chunkIndex: String(indice),
+    totalChunks: String(total),
+    nome: envio.file.name,
+    musicaId: envio.musicaId,
+  });
+  const resposta = await fetch(`/api/escalas/${escalaId}/arquivo?${params}`, {
     method: "POST",
-    body: form,
     credentials: "include",
+    headers: { "Content-Type": "application/octet-stream" },
+    body: pedaco,
   });
   if (!resposta.ok) {
-    return { ok: false as const, erro: await mensagemErro(resposta), status: resposta.status };
+    return {
+      ok: false as const,
+      erro: await mensagemErro(resposta),
+      status: resposta.status,
+    };
   }
   return { ok: true as const };
 }
 
-async function enviarInteiro(escalaId: string, envio: EnvioArquivoCliente) {
-  const form = new FormData();
-  form.append("arquivo", envio.file);
-  form.append("musicaId", envio.musicaId);
-  return postFormulario(escalaId, form);
+function deveTentarMenor(resultado: { status?: number; erro: string }) {
+  if (resultado.status === 413) return true;
+  const texto = resultado.erro.toLowerCase();
+  return (
+    texto.includes("incompleto") ||
+    texto.includes("vazio") ||
+    texto.includes("tamanho")
+  );
 }
 
-async function enviarEmPartes(escalaId: string, envio: EnvioArquivoCliente) {
-  const total = Math.ceil(envio.file.size / TAMANHO_PEDACO);
-  const uploadId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+async function enviarEmPartes(
+  escalaId: string,
+  envio: EnvioArquivoCliente,
+  tamanhoPedaco: number,
+) {
+  const total = Math.max(1, Math.ceil(envio.file.size / tamanhoPedaco));
+  const uploadId = idEnvio();
   for (let indice = 0; indice < total; indice++) {
-    const inicio = indice * TAMANHO_PEDACO;
-    const pedaco = envio.file.slice(inicio, inicio + TAMANHO_PEDACO);
-    const form = new FormData();
-    form.append("arquivo", pedaco, envio.file.name);
-    form.append("musicaId", envio.musicaId);
-    form.append("uploadId", uploadId);
-    form.append("chunkIndex", String(indice));
-    form.append("totalChunks", String(total));
-    form.append("nomeOriginal", envio.file.name);
-    const resultado = await postFormulario(escalaId, form);
+    const inicio = indice * tamanhoPedaco;
+    const pedaco = envio.file.slice(inicio, inicio + tamanhoPedaco);
+    const resultado = await postPedaco(
+      escalaId,
+      envio,
+      uploadId,
+      indice,
+      total,
+      pedaco,
+    );
     if (!resultado.ok) return resultado;
   }
   return { ok: true as const };
@@ -68,14 +101,17 @@ export async function enviarArquivosEscala(
         erro: `O arquivo ${envio.file.name} deve ter no máximo ${TAMANHO_MAX_ARQUIVO_MB} MB.`,
       };
     }
-    let resultado =
-      envio.file.size > TAMANHO_PEDACO
-        ? await enviarEmPartes(escalaId, envio)
-        : await enviarInteiro(escalaId, envio);
-    if (!resultado.ok && resultado.status === 413 && envio.file.size <= TAMANHO_PEDACO) {
-      resultado = await enviarEmPartes(escalaId, envio);
+    let ultimo: { ok: false; erro: string; status?: number } | null = null;
+    for (const tamanho of PEDACOS_TENTATIVA) {
+      const resultado = await enviarEmPartes(escalaId, envio, tamanho);
+      if (resultado.ok) {
+        ultimo = null;
+        break;
+      }
+      ultimo = resultado;
+      if (!deveTentarMenor(resultado)) return resultado;
     }
-    if (!resultado.ok) return resultado;
+    if (ultimo) return ultimo;
   }
   return { ok: true as const };
 }

@@ -60,6 +60,7 @@ Desktop.ini
 /data/escalas/*
 !/data/escalas/.gitkeep
 /data/tmp-uploads/
+/prisma/uploads-escalas/
 /public/uploads/escalas/*
 !/public/uploads/escalas/.gitkeep
 
