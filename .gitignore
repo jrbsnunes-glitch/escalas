@@ -59,6 +59,7 @@ Desktop.ini
 !/public/escalas/.gitkeep
 /data/escalas/*
 !/data/escalas/.gitkeep
+/data/tmp-uploads/
 /public/uploads/escalas/*
 !/public/uploads/escalas/.gitkeep
 

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus, Trash2 } from "lucide-react";
 import { Botao, BotaoLink, Campo } from "./ui";
 import { arquivosDaMusica } from "@/lib/arquivo-escala-ui";
+import { enviarArquivosEscala } from "@/lib/enviar-arquivos-escala";
 import { cabecalhoEscala, rotuloSessao } from "@/lib/escala";
 import type {
   ArquivoEscalaResumo,
@@ -217,21 +218,9 @@ export function EscalaManualForm({
       }
       const idSalvo = String(dados.escala.id);
       if (enviosArquivo.length) {
-        const form = new FormData();
-        for (const envio of enviosArquivo) {
-          form.append("arquivo", envio.file);
-          form.append("musicaId", envio.musicaId);
-        }
-        const envio = await fetch(`/api/escalas/${idSalvo}/arquivo`, {
-          method: "POST",
-          body: form,
-          credentials: "include",
-        });
-        const corpo = await envio.json().catch(() => ({}));
+        const envio = await enviarArquivosEscala(idSalvo, enviosArquivo);
         if (!envio.ok) {
-          setErro(corpo.erro ?? "A escala foi salva, mas os arquivos não.");
-          router.push(`/escalas/${idSalvo}`);
-          router.refresh();
+          setErro(envio.erro);
           return;
         }
         setArquivosPorLinha({});

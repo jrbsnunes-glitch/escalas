@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Botao } from "./ui";
+import { enviarArquivosEscala } from "@/lib/enviar-arquivos-escala";
 
 export function EnviarArquivoEscala({ escalaId }: { escalaId: string }) {
   const router = useRouter();
@@ -18,19 +19,12 @@ export function EnviarArquivoEscala({ escalaId }: { escalaId: string }) {
     }
     setEnviando(true);
     try {
-      const form = new FormData();
-      for (const arquivo of arquivos) {
-        form.append("arquivo", arquivo);
-        form.append("musicaId", "");
-      }
-      const resposta = await fetch(`/api/escalas/${escalaId}/arquivo`, {
-        method: "POST",
-        body: form,
-        credentials: "include",
-      });
-      const corpo = await resposta.json().catch(() => ({}));
-      if (!resposta.ok) {
-        setErro(corpo.erro ?? `Falha no envio (${resposta.status}).`);
+      const envio = await enviarArquivosEscala(
+        escalaId,
+        arquivos.map((arquivo) => ({ file: arquivo, musicaId: "" })),
+      );
+      if (!envio.ok) {
+        setErro(envio.erro);
         return;
       }
       setArquivos([]);
