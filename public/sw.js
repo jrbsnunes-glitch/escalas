@@ -1,4 +1,4 @@
-const CACHE = "escalas-static-v2";
+const CACHE = "escalas-static-v3";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

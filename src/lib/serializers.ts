@@ -1,4 +1,5 @@
 import type { Funcao, Integrante, Prisma } from "@prisma/client";
+import { urlDownloadArquivo } from "./arquivo-escala";
 import { serializarMusica } from "./musica";
 import type { ConfigGeracao, EscalaDetalhe, IntegranteResumo, SessaoEscala } from "./types";
 
@@ -83,7 +84,7 @@ export function serializarEscala(escala: EscalaComInclude): EscalaDetalhe {
       .map((arquivo) => ({
         id: arquivo.id,
         nome: arquivo.nome,
-        path: arquivo.path,
+        path: urlDownloadArquivo(escala.id, arquivo.id),
         musicaId: arquivo.musicaId ?? null,
       })),
     blocos: escala.blocos

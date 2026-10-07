@@ -57,6 +57,8 @@ Desktop.ini
 # anexos das escalas
 /public/escalas/*
 !/public/escalas/.gitkeep
+/data/escalas/*
+!/data/escalas/.gitkeep
 
 # trava da limpeza automática
 /.limpeza-arquivos.json

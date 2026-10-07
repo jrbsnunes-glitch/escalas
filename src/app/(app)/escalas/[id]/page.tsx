@@ -14,6 +14,8 @@ import { alocacoesComPedidoPendente, opcoesPedidoTroca } from "@/lib/troca";
 import { cookies } from "next/headers";
 import { COOKIE_FUSO, dispararLimpezaArquivos } from "@/lib/limpeza-arquivos";
 
+export const dynamic = "force-dynamic";
+
 export default async function EscalaDetalhePage({
   params,
 }: {

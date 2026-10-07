@@ -24,8 +24,12 @@ export function EscalaIdCopiar({ id }: { id: string }) {
   return (
     <button
       type="button"
-      onClick={copiar}
-      className="inline-flex shrink-0 items-center gap-1 self-start rounded-lg border border-line px-3 py-1.5 text-xs text-gold hover:bg-bg"
+      onClick={(evento) => {
+        evento.preventDefault();
+        evento.stopPropagation();
+        void copiar();
+      }}
+      className="inline-flex shrink-0 items-center gap-1 self-start rounded-lg border border-gold/40 bg-bg-elev px-3 py-1.5 text-xs text-gold hover:bg-bg"
     >
       {copiado ? <Check size={14} /> : <Copy size={14} />}
       {copiado ? "Copiado" : "Copiar ID"}

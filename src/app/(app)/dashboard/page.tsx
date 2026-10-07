@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeftRight, CalendarPlus, Mic2, Sparkles } from "lucide-react";
+import { IdentificadorEscala } from "@/components/IdentificadorEscala";
 import { BotaoLink, Card, PageHeader } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import { cabecalhoEscala } from "@/lib/escala";
@@ -112,10 +113,10 @@ export default async function DashboardPage() {
         ) : (
           <ul className="divide-y divide-line">
             {escalas.map((escala) => (
-              <li key={escala.id}>
+              <li key={escala.id} className="py-3">
                 <Link
                   href={`/escalas/${escala.id}`}
-                  className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div>
                     <p className="font-medium">
@@ -128,6 +129,7 @@ export default async function DashboardPage() {
                   </div>
                   <span className="text-sm text-gold">Abrir</span>
                 </Link>
+                <IdentificadorEscala id={escala.id} compacto />
               </li>
             ))}
           </ul>
@@ -146,10 +148,10 @@ export default async function DashboardPage() {
         ) : (
           <ul className="divide-y divide-line">
             {especiais.map((escala) => (
-              <li key={escala.id}>
+              <li key={escala.id} className="py-3">
                 <Link
                   href={`/escalas/${escala.id}`}
-                  className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div>
                     <p className="font-medium">
@@ -161,6 +163,7 @@ export default async function DashboardPage() {
                   </div>
                   <span className="text-sm text-gold">Abrir</span>
                 </Link>
+                <IdentificadorEscala id={escala.id} compacto />
               </li>
             ))}
           </ul>

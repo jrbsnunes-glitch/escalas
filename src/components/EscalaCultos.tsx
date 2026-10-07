@@ -4,7 +4,9 @@ import {
   rotuloArquivoEscala,
   tituloMusicaNaEscala,
 } from "@/lib/arquivo-escala-ui";
+import { IdentificadorEscala } from "./IdentificadorEscala";
 import { LinksArquivoMusica } from "./LinksArquivoMusica";
+import { PlayerArquivoEscala } from "./PlayerArquivoEscala";
 import { SolicitarTroca } from "./SolicitarTroca";
 import {
   alocacoesPorSessao,
@@ -122,41 +124,30 @@ export function EscalaCultos({
 
   return (
     <div className="space-y-4">
-      <Card className="border-gold/40">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-gold">
-          ID da escala
-        </p>
-        <p
-          className="mt-1 break-all font-mono text-base leading-snug text-cream"
-          data-escala-id={escala.id}
-        >
-          {escala.id}
-        </p>
-      </Card>
+      <IdentificadorEscala id={escala.id} />
       {todosArquivos.length > 0 && (
         <Card>
           <h3 className="mb-2 font-display text-xl">Áudios e cifras</h3>
           <p className="mb-3 text-sm text-muted">
-            Disponíveis até o dia seguinte ao culto. Toque para baixar ou ouvir.
+            Disponíveis até o dia seguinte ao culto. Ouça aqui ou baixe o arquivo.
           </p>
           <ul className="grid gap-2">
             {todosArquivos.map((arquivo) => {
               const musica = tituloMusicaNaEscala(escala, arquivo.musicaId);
+              const rotulo = rotuloArquivoEscala(arquivo, todosArquivos);
+              const detalhe = [
+                musica ?? "Anexo geral",
+                arquivo.nome !== rotulo ? arquivo.nome : "",
+              ]
+                .filter(Boolean)
+                .join(" · ");
               return (
                 <li key={arquivo.id || arquivo.path}>
-                  <a
-                    href={arquivo.path}
-                    download={arquivo.nome}
-                    className="flex flex-col gap-0.5 rounded-xl border border-line bg-bg-soft px-3 py-2 text-sm text-gold sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <span>{rotuloArquivoEscala(arquivo, todosArquivos)}</span>
-                    <span className="text-xs text-muted">
-                      {musica ? musica : "Anexo geral"}
-                      {arquivo.nome !== rotuloArquivoEscala(arquivo, todosArquivos)
-                        ? ` · ${arquivo.nome}`
-                        : ""}
-                    </span>
-                  </a>
+                  <PlayerArquivoEscala
+                    arquivo={arquivo}
+                    rotulo={rotulo}
+                    detalhe={detalhe}
+                  />
                 </li>
               );
             })}

@@ -16,6 +16,8 @@ export function LinksArquivoMusica({
           key={arquivo.id || arquivo.path}
           href={arquivo.path}
           download={arquivo.nome}
+          target="_blank"
+          rel="noreferrer"
           className="text-gold"
         >
           {rotuloArquivoEscala(arquivo, todos)}

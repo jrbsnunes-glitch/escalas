@@ -84,6 +84,7 @@ export function EscalaManualForm({
     ],
   );
   const [arquivosPorLinha, setArquivosPorLinha] = useState<Record<string, File[]>>({});
+  const [arquivosGerais, setArquivosGerais] = useState<File[]>([]);
   const [arquivosExistentes, setArquivosExistentes] = useState<ArquivoEscalaResumo[]>(
     inicial?.arquivos ?? [],
   );
@@ -165,45 +166,31 @@ export function EscalaManualForm({
   }
 
   function coletarEnviosArquivo() {
-    const envios: { file: File; musicaId: string; chave: string }[] = [];
-    const pendentesSemMusica: string[] = [];
+    const envios: { file: File; musicaId: string }[] = [];
 
     blocos.forEach((bloco, blocoIndice) => {
       bloco.alocacoes.forEach((linha, linhaIndice) => {
         const chave = chaveLinha(blocoIndice, linhaIndice);
         const files = arquivosPorLinha[chave] ?? [];
-        if (!files.length) return;
-
-        if (
-          !linha.integranteId ||
-          linha.sessao !== "CANTOR" ||
-          !linha.musicaId
-        ) {
-          pendentesSemMusica.push(
-            `${bloco.nome || `Bloco ${blocoIndice + 1}`}: escolha cantor e música antes do áudio`,
-          );
-          return;
-        }
-
+        const musicaId =
+          linha.sessao === "CANTOR" && linha.musicaId ? linha.musicaId : "";
         for (const file of files) {
-          envios.push({ file, musicaId: linha.musicaId, chave });
+          envios.push({ file, musicaId });
         }
       });
     });
 
-    return { envios, pendentesSemMusica };
+    for (const file of arquivosGerais) {
+      envios.push({ file, musicaId: "" });
+    }
+
+    return envios;
   }
 
   async function salvar(evento: FormEvent) {
     evento.preventDefault();
     setErro("");
-    const { envios: enviosArquivo, pendentesSemMusica } = coletarEnviosArquivo();
-    if (pendentesSemMusica.length) {
-      setErro(
-        `Anexo pendente — ${pendentesSemMusica[0]}. O MP3 só sobe na linha do cantor com música definida.`,
-      );
-      return;
-    }
+    const enviosArquivo = coletarEnviosArquivo();
     const limpos = blocos.map((bloco) => ({
       ...bloco,
       alocacoes: bloco.alocacoes.filter((linha) => linha.integranteId),
@@ -219,6 +206,7 @@ export function EscalaManualForm({
         {
           method: escalaId ? "PATCH" : "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({ titulo, data, especial, blocos: limpos }),
         },
       );
@@ -237,6 +225,7 @@ export function EscalaManualForm({
         const envio = await fetch(`/api/escalas/${idSalvo}/arquivo`, {
           method: "POST",
           body: form,
+          credentials: "include",
         });
         const corpo = await envio.json().catch(() => ({}));
         if (!envio.ok) {
@@ -246,6 +235,7 @@ export function EscalaManualForm({
           return;
         }
         setArquivosPorLinha({});
+        setArquivosGerais([]);
       }
       router.push(`/escalas/${idSalvo}`);
       router.refresh();
@@ -400,6 +390,62 @@ export function EscalaManualForm({
         Adicionar culto / bloco
       </Botao>
 
+      <div className="rounded-2xl border border-dashed border-gold/40 bg-gold/5 p-4">
+        <p className="text-sm font-medium text-cream">Áudios e cifras da escala</p>
+        <p className="mt-1 text-xs text-muted">
+          Estes arquivos ficam visíveis para todos os componentes na ficha da escala
+          (PWA e navegador), até o dia seguinte ao culto.
+        </p>
+        <input
+          className="field mt-3 text-sm"
+          type="file"
+          multiple
+          accept=".mp3,.m4a,.wav,.ogg,.pdf,audio/*,application/pdf"
+          onChange={(e) => setArquivosGerais(Array.from(e.target.files ?? []))}
+        />
+        {arquivosGerais.length > 0 && (
+          <p className="mt-2 text-xs text-muted">
+            Novos: {arquivosGerais.map((arquivo) => arquivo.name).join(" · ")}
+          </p>
+        )}
+        {arquivosExistentes.length > 0 && (
+          <ul className="mt-3 grid gap-1">
+            {arquivosExistentes.map((arquivo) => (
+              <li
+                key={arquivo.id}
+                className="flex items-center justify-between gap-2 text-sm"
+              >
+                <a
+                  href={arquivo.path}
+                  download={arquivo.nome}
+                  className="truncate text-gold"
+                >
+                  {arquivo.nome}
+                </a>
+                {escalaId ? (
+                  <Botao
+                    type="button"
+                    variant="ghost"
+                    className="min-h-9 px-3 text-xs"
+                    onClick={async () => {
+                      await fetch(`/api/escalas/${escalaId}/arquivo/${arquivo.id}`, {
+                        method: "DELETE",
+                        credentials: "include",
+                      });
+                      setArquivosExistentes((atual) =>
+                        atual.filter((item) => item.id !== arquivo.id),
+                      );
+                    }}
+                  >
+                    Remover
+                  </Botao>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       {erro && <p className="text-sm text-danger">{erro}</p>}
       <div className="flex flex-col gap-2 sm:flex-row">
         <Botao type="submit" disabled={enviando}>
@@ -521,11 +567,12 @@ function SessaoMontagem({
                   <Trash2 size={16} />
                 </Botao>
               </div>
-              {sessao === "CANTOR" && linha.musicaId && onArquivosLinha && (
+              {sessao === "CANTOR" && onArquivosLinha && (
                 <div className="rounded-xl border border-dashed border-line/80 bg-bg/50 p-3">
                   <p className="mb-2 text-xs text-muted">
-                    Áudio ou cifra (PDF) desta música — somem no dia seguinte ao culto.
-                    Selecione a música acima antes de anexar o arquivo.
+                    Áudio ou cifra (PDF) desta linha — visível para todos os componentes
+                    até o dia seguinte ao culto. Se a música estiver selecionada, o
+                    arquivo fica vinculado a ela.
                   </p>
                   <input
                     className="field text-sm"

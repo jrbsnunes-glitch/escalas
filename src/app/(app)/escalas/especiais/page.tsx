@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { IdentificadorEscala } from "@/components/IdentificadorEscala";
 import { BotaoLink, Card, Empty, PageHeader } from "@/components/ui";
 import { EscalaCultos } from "@/components/EscalaCultos";
 import { ehAdmin, exigirSessaoPage } from "@/lib/acesso";
@@ -6,6 +7,8 @@ import { cabecalhoEscala } from "@/lib/escala";
 import { prisma } from "@/lib/prisma";
 import { includeEscala, serializarEscala } from "@/lib/serializers";
 import { alocacoesComPedidoPendente, opcoesPedidoTroca } from "@/lib/troca";
+
+export const dynamic = "force-dynamic";
 
 export default async function EscalasEspeciaisPage() {
   const sessao = await exigirSessaoPage();
@@ -39,9 +42,12 @@ export default async function EscalasEspeciaisPage() {
               const escala = serializarEscala(registro);
               return (
                 <div key={escala.id} className="space-y-4">
-                  <h2 className="font-display text-2xl">
-                    {cabecalhoEscala(escala.titulo, escala.data)}
-                  </h2>
+                  <div>
+                    <h2 className="font-display text-2xl">
+                      {cabecalhoEscala(escala.titulo, escala.data)}
+                    </h2>
+                    <IdentificadorEscala id={escala.id} compacto />
+                  </div>
                   <EscalaCultos
                     escala={escala}
                     integranteLogadoId={sessao.integranteId}
@@ -89,10 +95,10 @@ export default async function EscalasEspeciaisPage() {
       ) : (
         <div className="grid gap-3">
           {escalas.map((escala) => (
-            <Link key={escala.id} href={`/escalas/${escala.id}`}>
-              <Card>
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
+            <Card key={escala.id}>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0 flex-1">
+                  <Link href={`/escalas/${escala.id}`} className="block">
                     <p className="font-display text-xl">
                       {cabecalhoEscala(escala.titulo, escala.data.toISOString())}
                     </p>
@@ -102,14 +108,14 @@ export default async function EscalasEspeciaisPage() {
                       {escala.blocos.reduce((acc, b) => acc + b.alocacoes.length, 0)}{" "}
                       nomes
                     </p>
-                    <p className="mt-1 break-all font-mono text-xs text-gold/90">
-                      ID: {escala.id}
-                    </p>
-                  </div>
-                  <span className="text-sm text-gold">Ver e copiar</span>
+                  </Link>
+                  <IdentificadorEscala id={escala.id} compacto />
                 </div>
-              </Card>
-            </Link>
+                <Link href={`/escalas/${escala.id}`} className="text-sm text-gold">
+                  Ver e copiar
+                </Link>
+              </div>
+            </Card>
           ))}
         </div>
       )}

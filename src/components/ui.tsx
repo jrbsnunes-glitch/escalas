@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { IdentificadorEscala } from "./IdentificadorEscala";
 
 export function PageHeader({
   titulo,
@@ -25,20 +26,25 @@ export function PageHeader({
           <p className="mt-1 max-w-2xl text-sm text-muted">{descricao}</p>
         )}
         {identificador ? (
-          <div
-            id="escala-id-rotulo"
-            className="mt-3 flex flex-col gap-2 rounded-xl border-2 border-gold/45 bg-bg-soft px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
-          >
-            <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-gold">
-                ID da escala
-              </p>
-              <p className="mt-0.5 break-all font-mono text-sm leading-snug text-cream">
-                {identificador}
-              </p>
+          acaoIdentificador ? (
+            <div
+              id="escala-id-rotulo"
+              data-escala-id={identificador}
+              className="mt-3 flex flex-col gap-2 rounded-xl border-2 border-gold bg-gold/10 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-gold">
+                  ID da escala
+                </p>
+                <p className="mt-0.5 break-all font-mono text-sm font-semibold leading-snug text-cream">
+                  {identificador}
+                </p>
+              </div>
+              {acaoIdentificador}
             </div>
-            {acaoIdentificador}
-          </div>
+          ) : (
+            <IdentificadorEscala id={identificador} />
+          )
         ) : null}
       </div>
       {acao ? <div className="shrink-0">{acao}</div> : null}
