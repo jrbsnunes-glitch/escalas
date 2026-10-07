@@ -122,6 +122,17 @@ export function EscalaCultos({
 
   return (
     <div className="space-y-4">
+      <Card className="border-gold/40">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-gold">
+          ID da escala
+        </p>
+        <p
+          className="mt-1 break-all font-mono text-base leading-snug text-cream"
+          data-escala-id={escala.id}
+        >
+          {escala.id}
+        </p>
+      </Card>
       {todosArquivos.length > 0 && (
         <Card>
           <h3 className="mb-2 font-display text-xl">Áudios e cifras</h3>

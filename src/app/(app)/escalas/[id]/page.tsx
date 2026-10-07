@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { includeEscala, serializarEscala } from "@/lib/serializers";
 import { cabecalhoEscala } from "@/lib/escala";
 import { ExcluirEscala } from "@/components/ExcluirEscala";
-import { RotuloIdEscala } from "@/components/RotuloIdEscala";
+import { EscalaIdCopiar } from "@/components/EscalaIdCopiar";
 import { ehAdmin, exigirSessaoPage, membroPodeVerEscala } from "@/lib/acesso";
 import { alocacoesComPedidoPendente, opcoesPedidoTroca } from "@/lib/troca";
 import { cookies } from "next/headers";
@@ -43,6 +43,8 @@ export default async function EscalaDetalhePage({
     <>
       <PageHeader
         titulo={cabecalhoEscala(escala.titulo, escala.data)}
+        identificador={escala.id}
+        acaoIdentificador={<EscalaIdCopiar id={escala.id} />}
         descricao={
           escala.especial
             ? admin
@@ -56,7 +58,6 @@ export default async function EscalaDetalhePage({
         }
         acao={admin ? <EscalaAcoes escala={escala} /> : undefined}
       />
-      <RotuloIdEscala id={escala.id} />
 
       {admin && escala.avisos.length > 0 && (
         <Card className="mb-4 border-gold/30">

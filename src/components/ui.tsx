@@ -4,23 +4,44 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 export function PageHeader({
   titulo,
   descricao,
+  identificador,
+  acaoIdentificador,
   acao,
 }: {
   titulo: string;
   descricao?: string;
+  /** ID técnico da escala (renderizado no HTML do servidor). */
+  identificador?: string;
+  acaoIdentificador?: ReactNode;
   acao?: ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-      <div>
+    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0 flex-1">
         <h1 className="font-display text-2xl tracking-tight text-cream sm:text-3xl lg:text-4xl">
           {titulo}
         </h1>
         {descricao && (
           <p className="mt-1 max-w-2xl text-sm text-muted">{descricao}</p>
         )}
+        {identificador ? (
+          <div
+            id="escala-id-rotulo"
+            className="mt-3 flex flex-col gap-2 rounded-xl border-2 border-gold/45 bg-bg-soft px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-gold">
+                ID da escala
+              </p>
+              <p className="mt-0.5 break-all font-mono text-sm leading-snug text-cream">
+                {identificador}
+              </p>
+            </div>
+            {acaoIdentificador}
+          </div>
+        ) : null}
       </div>
-      {acao}
+      {acao ? <div className="shrink-0">{acao}</div> : null}
     </div>
   );
 }

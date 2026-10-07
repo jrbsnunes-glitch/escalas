@@ -6,7 +6,7 @@ import { serializarMusica } from "@/lib/musica";
 import { includeEscala, serializarEscala, serializarIntegrante } from "@/lib/serializers";
 import { sessaoDaAlocacao } from "@/lib/escala";
 
-import { RotuloIdEscala } from "@/components/RotuloIdEscala";
+import { EscalaIdCopiar } from "@/components/EscalaIdCopiar";
 import { exigirAdmin } from "@/lib/acesso";
 
 export default async function EditarEscalaPage({
@@ -39,8 +39,9 @@ export default async function EditarEscalaPage({
       <PageHeader
         titulo="Ajustar escala"
         descricao="Troque nomes entre blocos ou funções. As métricas são recalculadas ao salvar."
+        identificador={escala.id}
+        acaoIdentificador={<EscalaIdCopiar id={escala.id} />}
       />
-      <RotuloIdEscala id={escala.id} />
       <Card>
         <EscalaManualForm
           escalaId={escala.id}
