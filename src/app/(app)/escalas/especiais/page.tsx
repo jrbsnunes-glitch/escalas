@@ -102,6 +102,9 @@ export default async function EscalasEspeciaisPage() {
                       {escala.blocos.reduce((acc, b) => acc + b.alocacoes.length, 0)}{" "}
                       nomes
                     </p>
+                    <p className="mt-1 truncate font-mono text-[11px] text-muted">
+                      {escala.id}
+                    </p>
                   </div>
                   <span className="text-sm text-gold">Ver e copiar</span>
                 </div>
