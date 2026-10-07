@@ -12,7 +12,8 @@ const HOSTS_YOUTUBE = new Set([
 
 export const EXTENSOES_ARQUIVO = new Set(["mp3", "m4a", "wav", "ogg", "pdf"]);
 export const EXTENSOES_AUDIO = new Set(["mp3", "m4a", "wav", "ogg"]);
-export const TAMANHO_MAX_ARQUIVO = 15 * 1024 * 1024;
+export const TAMANHO_MAX_ARQUIVO_MB = 21;
+export const TAMANHO_MAX_ARQUIVO = TAMANHO_MAX_ARQUIVO_MB * 1024 * 1024;
 
 export function serializarMusica(musica: Musica): MusicaResumo {
   return {

@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { recusarSeNaoAdmin } from "@/lib/acesso";
 import { includeEscala, serializarEscala } from "@/lib/serializers";
-import { TAMANHO_MAX_ARQUIVO } from "@/lib/musica";
+import { TAMANHO_MAX_ARQUIVO, TAMANHO_MAX_ARQUIVO_MB } from "@/lib/musica";
 import { gravarArquivosEscala } from "@/lib/arquivo-escala";
+
+export const runtime = "nodejs";
 
 export async function POST(
   request: Request,
@@ -21,7 +23,17 @@ export async function POST(
     return NextResponse.json({ erro: "Escala não encontrada." }, { status: 404 });
   }
 
-  const form = await request.formData();
+  let form: FormData;
+  try {
+    form = await request.formData();
+  } catch {
+    return NextResponse.json(
+      {
+        erro: `O envio chegou incompleto. Tente um arquivo menor que ${TAMANHO_MAX_ARQUIVO_MB} MB.`,
+      },
+      { status: 400 },
+    );
+  }
   const arquivos = form
     .getAll("arquivo")
     .concat(form.getAll("arquivos"))
@@ -40,7 +52,9 @@ export async function POST(
   for (const { file } of enviados) {
     if (file.size > TAMANHO_MAX_ARQUIVO) {
       return NextResponse.json(
-        { erro: `O arquivo ${file.name} deve ter no máximo 15 MB.` },
+        {
+          erro: `O arquivo ${file.name} deve ter no máximo ${TAMANHO_MAX_ARQUIVO_MB} MB.`,
+        },
         { status: 400 },
       );
     }

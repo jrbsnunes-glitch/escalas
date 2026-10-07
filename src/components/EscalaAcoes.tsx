@@ -9,9 +9,9 @@ import type { EscalaDetalhe } from "@/lib/types";
 
 export function EscalaAcoes({ escala }: { escala: EscalaDetalhe }) {
   const [copiado, setCopiado] = useState(false);
+  const [idCopiado, setIdCopiado] = useState(false);
 
-  async function copiar() {
-    const texto = formatarWhatsApp(escala);
+  async function copiarTexto(texto: string) {
     try {
       await navigator.clipboard.writeText(texto);
     } catch {
@@ -22,12 +22,22 @@ export function EscalaAcoes({ escala }: { escala: EscalaDetalhe }) {
       document.execCommand("copy");
       document.body.removeChild(area);
     }
+  }
+
+  async function copiar() {
+    await copiarTexto(formatarWhatsApp(escala));
     setCopiado(true);
     window.setTimeout(() => setCopiado(false), 2000);
   }
 
+  async function copiarId() {
+    await copiarTexto(escala.id);
+    setIdCopiado(true);
+    window.setTimeout(() => setIdCopiado(false), 2000);
+  }
+
   return (
-    <div className="stack-mobile flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+    <div className="stack-mobile flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
       <Botao type="button" onClick={copiar}>
         {copiado ? <Check size={16} /> : <Copy size={16} />}
         {copiado ? "Copiado" : "Copiar para WhatsApp"}
@@ -35,6 +45,10 @@ export function EscalaAcoes({ escala }: { escala: EscalaDetalhe }) {
       <Botao type="button" variant="ghost" onClick={() => gerarPdfEscala(escala)}>
         <FileDown size={16} />
         Gerar PDF
+      </Botao>
+      <Botao type="button" variant="ghost" onClick={copiarId}>
+        {idCopiado ? <Check size={16} /> : <Copy size={16} />}
+        {idCopiado ? "ID copiado" : "Copiar ID"}
       </Botao>
     </div>
   );

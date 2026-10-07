@@ -7,6 +7,7 @@ import { BotaoLink, Card, PageHeader } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import { includeEscala, serializarEscala } from "@/lib/serializers";
 import { cabecalhoEscala } from "@/lib/escala";
+import { EnviarArquivoEscala } from "@/components/EnviarArquivoEscala";
 import { ExcluirEscala } from "@/components/ExcluirEscala";
 import { EscalaIdCopiar } from "@/components/EscalaIdCopiar";
 import { ehAdmin, exigirSessaoPage, membroPodeVerEscala } from "@/lib/acesso";
@@ -85,6 +86,7 @@ export default async function EscalaDetalhePage({
           </Card>
 
           <div className="space-y-4">
+            <EnviarArquivoEscala escalaId={escala.id} />
             <EscalaCultos
               escala={escala}
               mostrarMetadados

@@ -7,8 +7,19 @@ import {
 } from "./musica";
 
 /** Pasta antiga (colidia com a rota /escalas/[id]). */
-export const PASTA_ESCALAS_PUBLICA = path.join(process.cwd(), "public", "escalas");
-/** Pasta atual, fora das rotas da App Router. */
+export const PASTA_ESCALAS_PUBLICA = path.join(
+  process.cwd(),
+  "public",
+  "escalas",
+);
+/** Pasta estável no VPS (gravável junto com o app). */
+export const PASTA_ESCALAS_UPLOAD = path.join(
+  process.cwd(),
+  "public",
+  "uploads",
+  "escalas",
+);
+/** Pasta alternativa fora de public. */
 export const PASTA_ESCALAS = path.join(process.cwd(), "data", "escalas");
 
 export function pastaEscala(escalaId: string) {
@@ -50,6 +61,7 @@ export async function localizarArquivoNoDisco(arquivo: {
 }) {
   const nome = path.basename(arquivo.path);
   const candidatos = [
+    path.join(process.cwd(), "public", "uploads", "escalas", arquivo.escalaId, nome),
     path.join(process.cwd(), "data", "escalas", arquivo.escalaId, nome),
     path.join(process.cwd(), "public", "escalas", arquivo.escalaId, nome),
   ];
@@ -74,6 +86,10 @@ export async function lerArquivoEscala(arquivo: { path: string; escalaId: string
 }
 
 export async function apagarPastaEscala(escalaId: string) {
+  await rm(path.join(PASTA_ESCALAS_UPLOAD, escalaId), {
+    recursive: true,
+    force: true,
+  });
   await rm(pastaEscala(escalaId), { recursive: true, force: true });
   await rm(path.join(PASTA_ESCALAS_PUBLICA, escalaId), {
     recursive: true,
@@ -91,8 +107,31 @@ export async function gravarArquivosEscala(
   enviados: EnvioArquivoEscala[],
   ordemInicial: number,
 ) {
-  const pasta = pastaEscala(escalaId);
-  await mkdir(pasta, { recursive: true });
+  const pasta = path.join(PASTA_ESCALAS_UPLOAD, escalaId);
+  try {
+    await mkdir(pasta, { recursive: true });
+  } catch (falha) {
+    const alternativa = pastaEscala(escalaId);
+    try {
+      await mkdir(alternativa, { recursive: true });
+    } catch {
+      throw new Error(
+        falha instanceof Error
+          ? `Não foi possível gravar no servidor: ${falha.message}`
+          : "Não foi possível criar a pasta dos arquivos no servidor.",
+      );
+    }
+    return gravarNaPasta(alternativa, escalaId, enviados, ordemInicial);
+  }
+  return gravarNaPasta(pasta, escalaId, enviados, ordemInicial);
+}
+
+async function gravarNaPasta(
+  pasta: string,
+  escalaId: string,
+  enviados: EnvioArquivoEscala[],
+  ordemInicial: number,
+) {
 
   const criados: {
     nome: string;
@@ -115,10 +154,18 @@ export async function gravarArquivosEscala(
         : arquivo.name;
     const tipo = ext === "pdf" ? "pdf" : "audio";
     const discoNome = `${stamp}-${tipo}-${indice}-${nomeArquivoSeguro(nomeOriginal)}`;
-    await writeFile(
-      path.join(pasta, discoNome),
-      Buffer.from(await arquivo.arrayBuffer()),
-    );
+    try {
+      await writeFile(
+        path.join(pasta, discoNome),
+        Buffer.from(await arquivo.arrayBuffer()),
+      );
+    } catch (falha) {
+      throw new Error(
+        falha instanceof Error
+          ? `Falha ao gravar ${nomeOriginal}: ${falha.message}`
+          : `Falha ao gravar ${nomeOriginal} no servidor.`,
+      );
+    }
     criados.push({
       nome: nomeOriginal,
       path: caminhoLogico(escalaId, discoNome),

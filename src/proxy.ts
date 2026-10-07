@@ -38,6 +38,7 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|webmanifest|mp3|m4a|wav|ogg|pdf)$).*)",
+    // /api/ fica de fora: o proxy bufferiza o body e corta MP3 no VPS.
+    "/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|webmanifest|mp3|m4a|wav|ogg|pdf)$).*)",
   ],
 };
