@@ -1,5 +1,5 @@
 import { EXTENSOES_AUDIO, extensaoArquivo } from "./musica";
-import type { ArquivoEscalaResumo } from "./types";
+import type { ArquivoEscalaResumo, EscalaDetalhe } from "./types";
 
 export function arquivosDaMusica(
   arquivos: ArquivoEscalaResumo[],
@@ -10,6 +10,18 @@ export function arquivosDaMusica(
 
 export function arquivosSemMusica(arquivos: ArquivoEscalaResumo[]) {
   return arquivos.filter((item) => !item.musicaId);
+}
+
+export function tituloMusicaNaEscala(escala: EscalaDetalhe, musicaId: string | null) {
+  if (!musicaId) return null;
+  for (const bloco of escala.blocos) {
+    for (const alocacao of bloco.alocacoes) {
+      if (alocacao.musica?.id === musicaId) {
+        return alocacao.musica.titulo;
+      }
+    }
+  }
+  return null;
 }
 
 export function rotuloArquivoEscala(

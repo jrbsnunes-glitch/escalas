@@ -1,7 +1,10 @@
 import { Card } from "./ui";
-import { arquivosDaMusica, arquivosSemMusica } from "@/lib/arquivo-escala-ui";
+import {
+  arquivosDaMusica,
+  rotuloArquivoEscala,
+  tituloMusicaNaEscala,
+} from "@/lib/arquivo-escala-ui";
 import { LinksArquivoMusica } from "./LinksArquivoMusica";
-import { LinksArquivosEscala } from "./LinksArquivosEscala";
 import { SolicitarTroca } from "./SolicitarTroca";
 import {
   alocacoesPorSessao,
@@ -115,15 +118,38 @@ export function EscalaCultos({
   musicas?: MusicaResumo[];
   integrantes?: IntegranteResumo[];
 }) {
+  const todosArquivos = escala.arquivos ?? [];
+
   return (
     <div className="space-y-4">
-      {arquivosSemMusica(escala.arquivos ?? []).length > 0 && (
+      {todosArquivos.length > 0 && (
         <Card>
-          <h3 className="mb-3 font-display text-xl">Arquivos para ensaio</h3>
+          <h3 className="mb-2 font-display text-xl">Áudios e cifras</h3>
           <p className="mb-3 text-sm text-muted">
-            Anexos sem música definida. Somem no dia seguinte ao culto.
+            Disponíveis até o dia seguinte ao culto. Toque para baixar ou ouvir.
           </p>
-          <LinksArquivosEscala arquivos={arquivosSemMusica(escala.arquivos ?? [])} />
+          <ul className="grid gap-2">
+            {todosArquivos.map((arquivo) => {
+              const musica = tituloMusicaNaEscala(escala, arquivo.musicaId);
+              return (
+                <li key={arquivo.id || arquivo.path}>
+                  <a
+                    href={arquivo.path}
+                    download={arquivo.nome}
+                    className="flex flex-col gap-0.5 rounded-xl border border-line bg-bg-soft px-3 py-2 text-sm text-gold sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <span>{rotuloArquivoEscala(arquivo, todosArquivos)}</span>
+                    <span className="text-xs text-muted">
+                      {musica ? musica : "Anexo geral"}
+                      {arquivo.nome !== rotuloArquivoEscala(arquivo, todosArquivos)
+                        ? ` · ${arquivo.nome}`
+                        : ""}
+                    </span>
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
         </Card>
       )}
       {escala.blocos.map((bloco) => (

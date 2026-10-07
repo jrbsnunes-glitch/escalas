@@ -2,7 +2,7 @@ import { readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { prisma } from "./prisma";
 import { apagarPastaEscala } from "./arquivo-escala";
-import { COOKIE_FUSO, fusoDeCookie, partesHoje, ymdDeData } from "./datas";
+import { COOKIE_FUSO, fusoDeCookie, partesHoje } from "./datas";
 
 const FUSO_PADRAO = "America/Manaus";
 const INTERVALO_MS = 20 * 60 * 1000;
@@ -33,7 +33,8 @@ async function limparRepertorioAntigo() {
 
 export async function limparArquivosEscalasVencidas(fusoCookie?: string | null) {
   if (!(await podeRodar())) return;
-  const hoje = partesHoje(new Date(), fusoLimpeza(fusoCookie)).ymd;
+  const fuso = fusoLimpeza(fusoCookie);
+  const hoje = partesHoje(new Date(), fuso).ymd;
 
   const escalas = await prisma.escala.findMany({
     where: { arquivos: { some: {} } },
@@ -41,7 +42,13 @@ export async function limparArquivosEscalasVencidas(fusoCookie?: string | null) 
   });
 
   for (const escala of escalas) {
-    if (ymdDeData(escala.data) >= hoje) continue;
+    const diaCulto = new Intl.DateTimeFormat("en-CA", {
+      timeZone: fuso,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(escala.data);
+    if (diaCulto >= hoje) continue;
     await apagarPastaEscala(escala.id);
     await prisma.arquivoEscala.deleteMany({ where: { escalaId: escala.id } });
   }

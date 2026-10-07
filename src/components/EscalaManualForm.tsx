@@ -164,9 +164,46 @@ export function EscalaManualForm({
     );
   }
 
+  function coletarEnviosArquivo() {
+    const envios: { file: File; musicaId: string; chave: string }[] = [];
+    const pendentesSemMusica: string[] = [];
+
+    blocos.forEach((bloco, blocoIndice) => {
+      bloco.alocacoes.forEach((linha, linhaIndice) => {
+        const chave = chaveLinha(blocoIndice, linhaIndice);
+        const files = arquivosPorLinha[chave] ?? [];
+        if (!files.length) return;
+
+        if (
+          !linha.integranteId ||
+          linha.sessao !== "CANTOR" ||
+          !linha.musicaId
+        ) {
+          pendentesSemMusica.push(
+            `${bloco.nome || `Bloco ${blocoIndice + 1}`}: escolha cantor e música antes do áudio`,
+          );
+          return;
+        }
+
+        for (const file of files) {
+          envios.push({ file, musicaId: linha.musicaId, chave });
+        }
+      });
+    });
+
+    return { envios, pendentesSemMusica };
+  }
+
   async function salvar(evento: FormEvent) {
     evento.preventDefault();
     setErro("");
+    const { envios: enviosArquivo, pendentesSemMusica } = coletarEnviosArquivo();
+    if (pendentesSemMusica.length) {
+      setErro(
+        `Anexo pendente — ${pendentesSemMusica[0]}. O MP3 só sobe na linha do cantor com música definida.`,
+      );
+      return;
+    }
     const limpos = blocos.map((bloco) => ({
       ...bloco,
       alocacoes: bloco.alocacoes.filter((linha) => linha.integranteId),
@@ -191,24 +228,9 @@ export function EscalaManualForm({
         return;
       }
       const idSalvo = String(dados.escala.id);
-      const envios: { file: File; musicaId: string }[] = [];
-      blocos.forEach((bloco, blocoIndice) => {
-        bloco.alocacoes.forEach((linha, linhaIndice) => {
-          if (
-            !linha.integranteId ||
-            linha.sessao !== "CANTOR" ||
-            !linha.musicaId
-          ) {
-            return;
-          }
-          for (const file of arquivosPorLinha[chaveLinha(blocoIndice, linhaIndice)] ?? []) {
-            envios.push({ file, musicaId: linha.musicaId });
-          }
-        });
-      });
-      if (envios.length) {
+      if (enviosArquivo.length) {
         const form = new FormData();
-        for (const envio of envios) {
+        for (const envio of enviosArquivo) {
           form.append("arquivo", envio.file);
           form.append("musicaId", envio.musicaId);
         }
@@ -223,6 +245,7 @@ export function EscalaManualForm({
           router.refresh();
           return;
         }
+        setArquivosPorLinha({});
       }
       router.push(`/escalas/${idSalvo}`);
       router.refresh();
@@ -502,6 +525,7 @@ function SessaoMontagem({
                 <div className="rounded-xl border border-dashed border-line/80 bg-bg/50 p-3">
                   <p className="mb-2 text-xs text-muted">
                     Áudio ou cifra (PDF) desta música — somem no dia seguinte ao culto.
+                    Selecione a música acima antes de anexar o arquivo.
                   </p>
                   <input
                     className="field text-sm"
