@@ -4,7 +4,7 @@
 
 import { FormEvent, useState, Suspense } from "react";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 import { Botao, Campo } from "@/components/ui";
 
@@ -19,8 +19,6 @@ import { ehPerfilUsuario } from "@/lib/types";
 
 
 function LoginForm() {
-
-  const router = useRouter();
 
   const params = useSearchParams();
 
@@ -56,29 +54,36 @@ function LoginForm() {
 
       });
 
-      const dados = await resposta.json();
+      const tipo = resposta.headers.get("content-type") ?? "";
+
+      const dados = tipo.includes("application/json")
+        ? ((await resposta.json()) as {
+            erro?: string;
+            destino?: string;
+            usuario?: { perfil?: string };
+            precisaCompletarCadastro?: boolean;
+          })
+        : null;
 
       if (!resposta.ok) {
 
-        setErro(dados.erro ?? "Não foi possível entrar.");
+        setErro(dados?.erro ?? `Não foi possível entrar (HTTP ${resposta.status}).`);
 
         return;
 
       }
 
-      const perfil = ehPerfilUsuario(dados.usuario?.perfil)
+      const perfilBruto = dados?.usuario?.perfil;
 
-        ? dados.usuario.perfil
+      const perfil = ehPerfilUsuario(perfilBruto) ? perfilBruto : "MEMBRO";
 
-        : "MEMBRO";
+      const destino =
+        dados?.destino ||
+        (dados?.precisaCompletarCadastro
+          ? "/primeiro-acesso"
+          : destinoAposLogin(perfil, params.get("next")));
 
-      if (dados.precisaCompletarCadastro) {
-        router.replace("/primeiro-acesso");
-      } else {
-        router.replace(destinoAposLogin(perfil, params.get("next")));
-      }
-
-      router.refresh();
+      window.location.assign(destino);
 
     } finally {
 

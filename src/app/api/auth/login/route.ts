@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/prisma";
 import { AUTH_COOKIE, assinarSessao, opcoesCookieSessao } from "@/lib/auth";
 import { buscarUsuarioPorLogin } from "@/lib/login";
 import { precisaCompletarCadastro } from "@/lib/onboarding";
+import { destinoAposLogin } from "@/lib/perfis";
 import { ehPerfilUsuario } from "@/lib/types";
 
 export async function POST(request: Request) {
@@ -44,11 +45,18 @@ export async function POST(request: Request) {
     perfil,
   };
   const token = await assinarSessao(sessao);
+  const precisa = await precisaCompletarCadastro(usuario.id);
+  const destino = precisa ? "/primeiro-acesso" : destinoAposLogin(perfil);
+  const opcoes = opcoesCookieSessao();
+
+  const jar = await cookies();
+  jar.set(AUTH_COOKIE, token, opcoes);
 
   const resposta = NextResponse.json({
     usuario: sessao,
-    precisaCompletarCadastro: await precisaCompletarCadastro(usuario.id),
+    precisaCompletarCadastro: precisa,
+    destino,
   });
-  resposta.cookies.set(AUTH_COOKIE, token, opcoesCookieSessao());
+  resposta.cookies.set(AUTH_COOKIE, token, opcoes);
   return resposta;
 }

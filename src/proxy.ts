@@ -1,6 +1,7 @@
 import { NextResponse, userAgent } from "next/server";
 import type { NextRequest } from "next/server";
 import { AUTH_COOKIE } from "@/lib/constants";
+import { urlPublica } from "@/lib/url-publica";
 
 const PUBLICOS = ["/login", "/api/auth/login"];
 
@@ -22,7 +23,7 @@ export function proxy(request: NextRequest) {
   const api = pathname.startsWith("/api/");
 
   if (!token && !publico && !api) {
-    const login = new URL("/login", request.url);
+    const login = urlPublica(request, "/login");
     login.searchParams.set("next", pathname);
     const redirecionar = NextResponse.redirect(login);
     redirecionar.headers.set("x-device-type", tipoUa);
