@@ -74,7 +74,9 @@ export function opcoesCookieSessao() {
   return {
     httpOnly: true,
     sameSite: "lax" as const,
-    secure: process.env.NODE_ENV === "production",
+    // O Funnel fala HTTPS com o navegador e HTTP com o Next (127.0.0.1:3000).
+    // Cookie Secure nesse caminho é descartado e o login volta para a tela.
+    secure: false,
     path: "/",
     maxAge: 60 * 60 * 24 * 7,
   };
