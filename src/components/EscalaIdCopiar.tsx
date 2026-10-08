@@ -29,10 +29,11 @@ export function EscalaIdCopiar({ id }: { id: string }) {
         evento.stopPropagation();
         void copiar();
       }}
-      className="inline-flex shrink-0 items-center gap-1 self-start rounded-lg border border-[#1a2420]/25 bg-[#fffdf8] px-3 py-1.5 text-xs font-semibold text-[#1a2420] hover:bg-white"
+      className="inline-flex shrink-0 items-center gap-1 text-[11px] text-muted hover:text-cream"
+      aria-label={copiado ? "ID copiado" : "Copiar ID da escala"}
     >
-      {copiado ? <Check size={14} /> : <Copy size={14} />}
-      {copiado ? "Copiado" : "Copiar ID"}
+      {copiado ? <Check size={12} /> : <Copy size={12} />}
+      {copiado ? "Copiado" : "Copiar"}
     </button>
   );
 }
