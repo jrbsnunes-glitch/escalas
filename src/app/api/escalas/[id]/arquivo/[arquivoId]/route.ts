@@ -53,10 +53,11 @@ export async function GET(
   const tipo = mimeArquivo(arquivo.nome);
   const total = lido.buffer.byteLength;
   const range = request.headers.get("range");
+  const forcarDownload = new URL(request.url).searchParams.has("download");
   const headersBase = {
     "Accept-Ranges": "bytes",
     "Content-Type": tipo,
-    "Content-Disposition": cabecalhoArquivo(arquivo.nome, true),
+    "Content-Disposition": cabecalhoArquivo(arquivo.nome, !forcarDownload),
     "Cache-Control": "private, no-store",
   };
 

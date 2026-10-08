@@ -1,3 +1,4 @@
+import { BotaoBaixarArquivo } from "./BotaoBaixarArquivo";
 import { rotuloArquivoEscala } from "@/lib/arquivo-escala-ui";
 import type { ArquivoEscalaResumo } from "@/lib/types";
 
@@ -12,16 +13,14 @@ export function LinksArquivoMusica({
   return (
     <>
       {arquivos.map((arquivo) => (
-        <a
+        <BotaoBaixarArquivo
           key={arquivo.id || arquivo.path}
           href={arquivo.path}
-          download={arquivo.nome}
-          target="_blank"
-          rel="noreferrer"
-          className="text-gold"
+          nome={arquivo.nome}
+          className="text-left text-gold"
         >
           {rotuloArquivoEscala(arquivo, todos)}
-        </a>
+        </BotaoBaixarArquivo>
       ))}
     </>
   );

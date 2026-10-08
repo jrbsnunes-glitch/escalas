@@ -3,8 +3,9 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2 } from "lucide-react";
+import { BotaoBaixarArquivo } from "./BotaoBaixarArquivo";
 import { Botao, BotaoLink, Campo } from "./ui";
-import { arquivosDaMusica } from "@/lib/arquivo-escala-ui";
+import { arquivosDaMusica, arquivosSemMusica } from "@/lib/arquivo-escala-ui";
 import { enviarArquivosEscala } from "@/lib/enviar-arquivos-escala";
 import { cabecalhoEscala, rotuloSessao } from "@/lib/escala";
 import type {
@@ -85,7 +86,6 @@ export function EscalaManualForm({
     ],
   );
   const [arquivosPorLinha, setArquivosPorLinha] = useState<Record<string, File[]>>({});
-  const [arquivosGerais, setArquivosGerais] = useState<File[]>([]);
   const [arquivosExistentes, setArquivosExistentes] = useState<ArquivoEscalaResumo[]>(
     inicial?.arquivos ?? [],
   );
@@ -182,10 +182,6 @@ export function EscalaManualForm({
       });
     });
 
-    for (const file of arquivosGerais) {
-      envios.push({ file, musicaId: "" });
-    }
-
     return envios;
   }
 
@@ -199,6 +195,10 @@ export function EscalaManualForm({
     }));
     if (limpos.some((bloco) => bloco.alocacoes.length === 0)) {
       setErro("Cada culto precisa de ao menos um músico ou cantor.");
+      return;
+    }
+    if (enviosArquivo.some((envio) => !envio.musicaId)) {
+      setErro("Escolha a música da linha antes de enviar o áudio ou a cifra.");
       return;
     }
     setEnviando(true);
@@ -230,7 +230,6 @@ export function EscalaManualForm({
           return;
         }
         setArquivosPorLinha({});
-        setArquivosGerais([]);
       }
       router.push(`/escalas/${idSalvo}`);
       router.refresh();
@@ -386,61 +385,41 @@ export function EscalaManualForm({
         Adicionar culto / bloco
       </Botao>
 
-      <div className="rounded-2xl border border-dashed border-gold/40 bg-gold/5 p-4">
-        <p className="text-sm font-medium text-cream">Áudios e cifras da escala</p>
-        <p className="mt-1 text-xs text-muted">
-          Estes arquivos ficam visíveis para todos os componentes na ficha da escala
-          (PWA e navegador), até o dia seguinte ao culto.
-        </p>
-        <input
-          className="field mt-3 text-sm"
-          type="file"
-          multiple
-          accept=".mp3,.m4a,.wav,.ogg,.pdf,audio/*,application/pdf"
-          onChange={(e) => setArquivosGerais(Array.from(e.target.files ?? []))}
-        />
-        {arquivosGerais.length > 0 && (
-          <p className="mt-2 text-xs text-muted">
-            Novos: {arquivosGerais.map((arquivo) => arquivo.name).join(" · ")}
+      {escalaId && arquivosSemMusica(arquivosExistentes).length > 0 ? (
+        <div className="rounded-2xl border border-line p-4">
+          <p className="text-sm font-medium text-cream">Anexos sem música</p>
+          <p className="mt-1 text-xs text-muted">
+            Enviados antes, sem vínculo. Remova ou deixe — novos arquivos só na
+            linha da música.
           </p>
-        )}
-        {arquivosExistentes.length > 0 && (
           <ul className="mt-3 grid gap-1">
-            {arquivosExistentes.map((arquivo) => (
+            {arquivosSemMusica(arquivosExistentes).map((arquivo) => (
               <li
                 key={arquivo.id}
                 className="flex items-center justify-between gap-2 text-sm"
               >
-                <a
-                  href={arquivo.path}
-                  download={arquivo.nome}
-                  className="truncate text-gold"
+                <span className="truncate">{arquivo.nome}</span>
+                <Botao
+                  type="button"
+                  variant="ghost"
+                  className="min-h-9 px-3 text-xs"
+                  onClick={async () => {
+                    await fetch(`/api/escalas/${escalaId}/arquivo/${arquivo.id}`, {
+                      method: "DELETE",
+                      credentials: "include",
+                    });
+                    setArquivosExistentes((atual) =>
+                      atual.filter((item) => item.id !== arquivo.id),
+                    );
+                  }}
                 >
-                  {arquivo.nome}
-                </a>
-                {escalaId ? (
-                  <Botao
-                    type="button"
-                    variant="ghost"
-                    className="min-h-9 px-3 text-xs"
-                    onClick={async () => {
-                      await fetch(`/api/escalas/${escalaId}/arquivo/${arquivo.id}`, {
-                        method: "DELETE",
-                        credentials: "include",
-                      });
-                      setArquivosExistentes((atual) =>
-                        atual.filter((item) => item.id !== arquivo.id),
-                      );
-                    }}
-                  >
-                    Remover
-                  </Botao>
-                ) : null}
+                  Remover
+                </Botao>
               </li>
             ))}
           </ul>
-        )}
-      </div>
+        </div>
+      ) : null}
 
       {erro && <p className="text-sm text-danger">{erro}</p>}
       <div className="flex flex-col gap-2 sm:flex-row">
@@ -566,19 +545,24 @@ function SessaoMontagem({
               {sessao === "CANTOR" && onArquivosLinha && (
                 <div className="rounded-xl border border-dashed border-line/80 bg-bg/50 p-3">
                   <p className="mb-2 text-xs text-muted">
-                    Áudio ou cifra (PDF) desta linha — visível para todos os componentes
-                    até o dia seguinte ao culto. Se a música estiver selecionada, o
-                    arquivo fica vinculado a ela.
+                    MP3 ou cifra (PDF) desta música. Escolha a música acima; o arquivo
+                    fica atrelado a ela e visível na ficha até o dia seguinte ao culto.
                   </p>
                   <input
                     className="field text-sm"
                     type="file"
                     multiple
+                    disabled={!linha.musicaId}
                     accept=".mp3,.m4a,.wav,.ogg,.pdf,audio/*,application/pdf"
                     onChange={(e) =>
                       onArquivosLinha(indice, Array.from(e.target.files ?? []))
                     }
                   />
+                  {!linha.musicaId ? (
+                    <p className="mt-1 text-xs text-muted">
+                      Selecione a música para liberar o envio do arquivo.
+                    </p>
+                  ) : null}
                   {novos.length > 0 && (
                     <p className="mt-1 text-xs text-muted">
                       Novos: {novos.map((arquivo) => arquivo.name).join(" · ")}
@@ -591,13 +575,13 @@ function SessaoMontagem({
                           key={arquivo.id}
                           className="flex items-center justify-between gap-2 text-sm"
                         >
-                          <a
+                          <BotaoBaixarArquivo
                             href={arquivo.path}
-                            download={arquivo.nome}
-                            className="truncate text-gold"
+                            nome={arquivo.nome}
+                            className="truncate text-left text-gold"
                           >
                             {arquivo.nome}
-                          </a>
+                          </BotaoBaixarArquivo>
                           <Botao
                             type="button"
                             variant="ghost"
