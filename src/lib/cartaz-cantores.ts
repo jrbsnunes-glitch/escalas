@@ -194,19 +194,26 @@ function desenharQuadroPdf(
       return;
     }
 
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    let colunaPapel = 28;
+    culto.cantores.forEach((cantor) => {
+      colunaPapel = Math.max(colunaPapel, doc.getTextWidth(cantor.papel) + 3);
+    });
+    colunaPapel = Math.min(colunaPapel, largura * 0.42);
+
     culto.cantores.forEach((cantor) => {
       if (atual > limite) return;
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
+      doc.setFontSize(9);
       doc.setTextColor(...COR.muted);
-      const papel = doc.splitTextToSize(cantor.papel, 28);
-      doc.text(papel[0], x + 9, atual);
+      doc.text(cantor.papel, x + 9, atual);
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
+      doc.setFontSize(11);
       doc.setTextColor(...COR.texto);
-      const nome = doc.splitTextToSize(cantor.nome, colunaTexto - 30);
-      doc.text(nome[0], x + 38, atual);
-      atual += 6;
+      const nome = doc.splitTextToSize(cantor.nome, colunaTexto - colunaPapel);
+      doc.text(nome[0], x + 9 + colunaPapel, atual);
+      atual += 7;
     });
     atual += 3;
   });
@@ -271,6 +278,15 @@ function desenharCartazCanvas(
   });
 }
 
+function caberTexto(ctx: CanvasRenderingContext2D, texto: string, max: number) {
+  if (max <= 0 || ctx.measureText(texto).width <= max) return texto;
+  let atual = texto;
+  while (atual.length > 1 && ctx.measureText(`${atual}…`).width > max) {
+    atual = atual.slice(0, -1);
+  }
+  return `${atual}…`;
+}
+
 function desenharQuadroCanvas(
   ctx: CanvasRenderingContext2D,
   quadro: QuadroSemana,
@@ -280,59 +296,89 @@ function desenharQuadroCanvas(
   altura: number,
   escala: number,
 ) {
+  ctx.save();
   arredondar(ctx, x, y, largura, altura, 3 * escala);
   ctx.fillStyle = rgb(COR.quadro);
   ctx.fill();
   ctx.strokeStyle = rgb(COR.linha);
   ctx.lineWidth = 0.4 * escala;
   ctx.stroke();
+  ctx.clip();
+
   ctx.fillStyle = rgb(COR.ouro);
   ctx.fillRect(x, y, 3 * escala, altura);
 
-  ctx.fillStyle = rgb(COR.texto);
-  ctx.font = `bold ${13 * escala}px Georgia, serif`;
-  ctx.fillText(quadro.rotulo, x + 8 * escala, y + 12 * escala);
+  ctx.textBaseline = "top";
+  ctx.textAlign = "left";
 
-  let atual = y + 20 * escala;
-  const limite = y + altura - 8 * escala;
+  const padX = 12 * escala;
+  const fonteTitulo = Math.max(28, Math.min(44, largura * 0.045));
+  const fonteCulto = Math.max(16, Math.min(22, largura * 0.024));
+  const fontePapel = Math.max(16, Math.min(22, largura * 0.022));
+  const fonteNome = Math.max(20, Math.min(28, largura * 0.028));
+  const linha = fonteNome * 1.55;
+  const faixa = fonteCulto + 14;
+
+  ctx.fillStyle = rgb(COR.texto);
+  ctx.font = `bold ${fonteTitulo}px Georgia, "Times New Roman", serif`;
+  ctx.fillText(
+    caberTexto(ctx, quadro.rotulo, largura - padX * 2),
+    x + padX,
+    y + 12 * escala,
+  );
+
+  let atual = y + 12 * escala + fonteTitulo + 14;
+  const limite = y + altura - 12 * escala;
+  const inner = largura - padX * 2;
 
   quadro.cultos.forEach((culto) => {
-    if (atual > limite) return;
-    arredondar(
-      ctx,
-      x + 6 * escala,
-      atual - 5 * escala,
-      largura - 12 * escala,
-      8 * escala,
-      1.5 * escala,
-    );
+    if (atual + faixa > limite) return;
+    arredondar(ctx, x + padX - 4, atual, inner + 8, faixa, 6);
     ctx.fillStyle = "rgb(232, 226, 210)";
     ctx.fill();
     ctx.fillStyle = rgb(COR.ouro);
-    ctx.font = `bold ${9 * escala}px system-ui, sans-serif`;
-    ctx.fillText(culto.nome.toUpperCase(), x + 9 * escala, atual + 1 * escala);
-    atual += 10 * escala;
+    ctx.font = `bold ${fonteCulto}px system-ui, sans-serif`;
+    ctx.fillText(
+      caberTexto(ctx, culto.nome.toUpperCase(), inner - 12),
+      x + padX + 6,
+      atual + (faixa - fonteCulto) / 2,
+    );
+    atual += faixa + 10;
 
     if (!culto.cantores.length) {
       ctx.fillStyle = rgb(COR.muted);
-      ctx.font = `italic ${8 * escala}px system-ui, sans-serif`;
-      ctx.fillText("Sem cantores neste culto.", x + 9 * escala, atual);
-      atual += 8 * escala;
+      ctx.font = `italic ${fontePapel}px system-ui, sans-serif`;
+      ctx.fillText("Sem cantores neste culto.", x + padX, atual);
+      atual += linha + 8;
       return;
     }
 
+    ctx.font = `${fontePapel}px system-ui, sans-serif`;
+    let colunaPapel = 0;
     culto.cantores.forEach((cantor) => {
-      if (atual > limite) return;
-      ctx.fillStyle = rgb(COR.muted);
-      ctx.font = `${8 * escala}px system-ui, sans-serif`;
-      ctx.fillText(cantor.papel, x + 9 * escala, atual);
-      ctx.fillStyle = rgb(COR.texto);
-      ctx.font = `bold ${11 * escala}px system-ui, sans-serif`;
-      ctx.fillText(cantor.nome, x + 40 * escala, atual);
-      atual += 7.5 * escala;
+      colunaPapel = Math.max(colunaPapel, ctx.measureText(cantor.papel).width);
     });
-    atual += 4 * escala;
+    colunaPapel = Math.min(colunaPapel, inner * 0.45);
+    const nomeX = x + padX + colunaPapel + 16;
+    const nomeMax = x + largura - padX - nomeX;
+
+    culto.cantores.forEach((cantor) => {
+      if (atual + linha > limite) return;
+      ctx.fillStyle = rgb(COR.muted);
+      ctx.font = `${fontePapel}px system-ui, sans-serif`;
+      ctx.fillText(
+        caberTexto(ctx, cantor.papel, colunaPapel),
+        x + padX,
+        atual,
+      );
+      ctx.fillStyle = rgb(COR.texto);
+      ctx.font = `bold ${fonteNome}px system-ui, sans-serif`;
+      ctx.fillText(caberTexto(ctx, cantor.nome, nomeMax), nomeX, atual);
+      atual += linha;
+    });
+    atual += 12;
   });
+  ctx.restore();
 }
 
 function rgb(cor: readonly [number, number, number]) {
