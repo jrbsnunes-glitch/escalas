@@ -4,6 +4,7 @@ import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2 } from "lucide-react";
 import { BotaoBaixarArquivo } from "./BotaoBaixarArquivo";
+import { SelecionarMusica } from "./SelecionarMusica";
 import { Botao, BotaoLink, Campo } from "./ui";
 import { arquivosDaMusica, arquivosSemMusica } from "@/lib/arquivo-escala-ui";
 import { enviarArquivosEscala } from "@/lib/enviar-arquivos-escala";
@@ -523,20 +524,13 @@ function SessaoMontagem({
                   ))}
                 </select>
                 {sessao === "CANTOR" && (
-                  <select
-                    className="field"
+                  <SelecionarMusica
+                    musicas={musicasAtivas}
                     value={linha.musicaId ?? ""}
-                    onChange={(e) =>
-                      onChangeLinha(blocoIndice, indice, { musicaId: e.target.value })
+                    onChange={(musicaId) =>
+                      onChangeLinha(blocoIndice, indice, { musicaId })
                     }
-                  >
-                    <option value="">Sem música</option>
-                    {musicasAtivas.map((musica) => (
-                      <option key={musica.id} value={musica.id}>
-                        {musica.titulo}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 )}
                 <Botao type="button" variant="ghost" onClick={() => onRemoveLinha(indice)}>
                   <Trash2 size={16} />
