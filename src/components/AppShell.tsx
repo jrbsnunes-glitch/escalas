@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   CalendarDays,
   Cake,
+  History,
   Home,
   ListMusic,
   LogOut,
@@ -31,6 +32,7 @@ const NAV_ADMIN = [
   { href: "/funcoes", label: "Funções", icon: SlidersHorizontal },
   { href: "/parametros", label: "Parâmetros", icon: Settings2 },
   { href: "/usuarios", label: "Usuários", icon: Users },
+  { href: "/acessos", label: "Acessos", icon: History },
 ];
 
 const NAV_MEMBRO = [

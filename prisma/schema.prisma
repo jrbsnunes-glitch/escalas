@@ -16,6 +16,19 @@ model Usuario {
   primeiroAcesso  Boolean    @default(false)
   createdAt       DateTime   @default(now())
   integrante      Integrante @relation(fields: [integranteId], references: [id], onDelete: Cascade)
+  acessos         LogAcesso[]
+}
+
+model LogAcesso {
+  id        String   @id @default(cuid())
+  usuarioId String?
+  nome      String
+  perfil    String
+  criadoEm  DateTime @default(now())
+  usuario   Usuario? @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+
+  @@index([criadoEm])
+  @@index([usuarioId])
 }
 
 model Parametro {

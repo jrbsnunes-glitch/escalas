@@ -94,6 +94,9 @@ export default async function EscalasPage() {
             <BotaoLink href="/escalas/especiais" variant="ghost">
               Escalas Especiais
             </BotaoLink>
+            <BotaoLink href="/escalas/cartaz-cantores" variant="ghost">
+              Cartaz de cantores
+            </BotaoLink>
             <BotaoLink href="/escalas/automatica">Gerar automática</BotaoLink>
             <BotaoLink href="/escalas/manual" variant="ghost">
               Montar manual

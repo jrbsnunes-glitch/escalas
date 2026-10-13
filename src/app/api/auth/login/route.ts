@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { AUTH_COOKIE, assinarSessao, opcoesCookieSessao } from "@/lib/auth";
 import { buscarUsuarioPorLogin } from "@/lib/login";
+import { registrarLogin } from "@/lib/log-acesso";
 import { precisaCompletarCadastro } from "@/lib/onboarding";
 import { destinoAposLogin } from "@/lib/perfis";
 import { ehPerfilUsuario } from "@/lib/types";
@@ -47,6 +48,7 @@ export async function POST(request: Request) {
     const token = await assinarSessao(sessao);
     const precisa = await precisaCompletarCadastro(usuario.id);
     const destino = precisa ? "/primeiro-acesso" : destinoAposLogin(perfil);
+    await registrarLogin(sessao);
 
     const resposta = NextResponse.json({
       usuario: sessao,
