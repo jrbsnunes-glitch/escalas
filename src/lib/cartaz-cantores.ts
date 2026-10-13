@@ -219,27 +219,109 @@ function desenharQuadroPdf(
   });
 }
 
-export function gerarPngCartazCantores(quadros: QuadroSemana[]) {
+export type ImagemCartaz = {
+  blob: Blob;
+  nome: string;
+};
+
+export type ResultadoPngCartaz =
+  | { modo: "compartilhou" | "baixou" }
+  | { modo: "mostrar"; imagens: ImagemCartaz[] };
+
+function ehIos() {
+  if (typeof navigator === "undefined") return false;
+  return (
+    /iPad|iPhone|iPod/i.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  );
+}
+
+function canvasParaBlob(canvas: HTMLCanvasElement) {
+  return new Promise<Blob>((resolver, rejeitar) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolver(blob);
+      else rejeitar(new Error("Não foi possível gerar a imagem."));
+    }, "image/png");
+  });
+}
+
+async function renderizarPngsCartaz(quadros: QuadroSemana[]) {
   const paginas = fatiar(quadros, 4);
   const titulo = tituloCartaz(quadros);
-  const largura = 2000;
-  const altura = 1414;
+  const estreito =
+    typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches;
+  const largura = estreito ? 1400 : 2000;
+  const altura = estreito ? 990 : 1414;
+  const imagens: ImagemCartaz[] = [];
 
-  paginas.forEach((pagina, indice) => {
+  for (const [indice, pagina] of paginas.entries()) {
     const canvas = document.createElement("canvas");
     canvas.width = largura;
     canvas.height = altura;
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (!ctx) throw new Error("Este aparelho não consegue gerar a imagem.");
     desenharCartazCanvas(ctx, pagina, titulo, largura, altura);
-    const ancora = document.createElement("a");
-    ancora.href = canvas.toDataURL("image/png");
-    ancora.download =
-      paginas.length > 1
-        ? nomeArquivoCartaz(quadros, "png").replace(".png", `-${indice + 1}.png`)
-        : nomeArquivoCartaz(quadros, "png");
-    ancora.click();
-  });
+    const blob = await canvasParaBlob(canvas);
+    imagens.push({
+      blob,
+      nome:
+        paginas.length > 1
+          ? nomeArquivoCartaz(quadros, "png").replace(".png", `-${indice + 1}.png`)
+          : nomeArquivoCartaz(quadros, "png"),
+    });
+  }
+  return imagens;
+}
+
+async function tentarCompartilhar(imagens: ImagemCartaz[]) {
+  const arquivos = imagens.map(
+    (item) => new File([item.blob], item.nome, { type: "image/png" }),
+  );
+  const nav = navigator as Navigator & {
+    canShare?: (dados: ShareData) => boolean;
+  };
+  if (!nav.share) return false;
+  const dados: ShareData = {
+    files: arquivos,
+    title: "Cartaz de cantores",
+  };
+  if (nav.canShare && !nav.canShare(dados)) return false;
+  try {
+    await nav.share(dados);
+    return true;
+  } catch (falha) {
+    if (falha instanceof Error && falha.name === "AbortError") return true;
+    return false;
+  }
+}
+
+function baixarBlob(blob: Blob, nome: string) {
+  const objeto = URL.createObjectURL(blob);
+  const ancora = document.createElement("a");
+  ancora.href = objeto;
+  ancora.download = nome;
+  ancora.rel = "noopener";
+  ancora.style.display = "none";
+  document.body.appendChild(ancora);
+  ancora.click();
+  ancora.remove();
+  window.setTimeout(() => URL.revokeObjectURL(objeto), 4000);
+}
+
+export async function gerarPngCartazCantores(
+  quadros: QuadroSemana[],
+): Promise<ResultadoPngCartaz> {
+  const imagens = await renderizarPngsCartaz(quadros);
+  if (await tentarCompartilhar(imagens)) {
+    return { modo: "compartilhou" };
+  }
+  if (ehIos()) {
+    return { modo: "mostrar", imagens };
+  }
+  for (const imagem of imagens) {
+    baixarBlob(imagem.blob, imagem.nome);
+  }
+  return { modo: "baixou" };
 }
 
 function desenharCartazCanvas(
