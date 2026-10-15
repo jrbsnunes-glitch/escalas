@@ -4,6 +4,7 @@ import { obterSessao } from "./auth";
 import type { Sessao } from "./types";
 import { prisma } from "./prisma";
 import { ehAdmin } from "./perfis";
+import { fimDoDomingoDaSemanaSaoPaulo } from "./datas";
 
 export { ehAdmin, destinoAposLogin, destinoInicial, rotuloPerfil } from "./perfis";
 export { ehPerfilUsuario } from "./types";
@@ -87,31 +88,63 @@ export function inicioDoDiaSaoPaulo(agora = new Date()) {
   return new Date(`${ymd}T00:00:00.000-03:00`);
 }
 
+export function whereEscalasVisiveisMembro(integranteId: string) {
+  const inicio = inicioDoDiaSaoPaulo();
+  const fim = fimDoDomingoDaSemanaSaoPaulo();
+  return {
+    especial: false as const,
+    OR: [
+      { data: { gte: inicio, lte: fim } },
+      {
+        data: { gte: inicio },
+        blocos: {
+          some: { alocacoes: { some: { integranteId } } },
+        },
+      },
+    ],
+  };
+}
+
 export function escolherEscalasDaSemana<T extends { data: Date }>(escalas: T[]) {
   const inicio = inicioDoDiaSaoPaulo().getTime();
-  const futuras = escalas
-    .filter((escala) => escala.data.getTime() >= inicio)
+  const fim = fimDoDomingoDaSemanaSaoPaulo().getTime();
+  return escalas
+    .filter((escala) => {
+      const tempo = escala.data.getTime();
+      return tempo >= inicio && tempo <= fim;
+    })
     .sort((a, b) => a.data.getTime() - b.data.getTime());
-  if (!futuras.length) return [];
-  const alvo = futuras[0].data.getTime();
-  return futuras.filter((escala) => escala.data.getTime() === alvo);
 }
 
-export async function idsEscalasDaSemanaMembro() {
-  const futuras = await prisma.escala.findMany({
-    where: { data: { gte: inicioDoDiaSaoPaulo() }, especial: false },
-    select: { id: true, data: true },
-    orderBy: { data: "asc" },
+export function escolherEscalasVisiveisMembro<
+  T extends { id: string; data: Date },
+>(escalas: T[], idsEmQueEsta: Set<string>) {
+  const inicio = inicioDoDiaSaoPaulo().getTime();
+  const daSemana = escolherEscalasDaSemana(escalas);
+  const proprias = escalas.filter(
+    (escala) => escala.data.getTime() >= inicio && idsEmQueEsta.has(escala.id),
+  );
+  const unicas = new Map<string, T>();
+  for (const escala of [...daSemana, ...proprias]) {
+    unicas.set(escala.id, escala);
+  }
+  return [...unicas.values()].sort((a, b) => a.data.getTime() - b.data.getTime());
+}
+
+export async function idsEscalasVisiveisMembro(integranteId: string) {
+  const escalas = await prisma.escala.findMany({
+    where: whereEscalasVisiveisMembro(integranteId),
+    select: { id: true },
   });
-  return new Set(escolherEscalasDaSemana(futuras).map((escala) => escala.id));
+  return new Set(escalas.map((escala) => escala.id));
 }
 
-export async function membroPodeVerEscala(id: string) {
+export async function membroPodeVerEscala(id: string, integranteId: string) {
   const escala = await prisma.escala.findUnique({
     where: { id },
     select: { especial: true },
   });
   if (escala?.especial) return true;
-  const ids = await idsEscalasDaSemanaMembro();
+  const ids = await idsEscalasVisiveisMembro(integranteId);
   return ids.has(id);
 }

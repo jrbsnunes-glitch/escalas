@@ -31,7 +31,7 @@ export default async function EscalaDetalhePage({
   });
   if (!registro) notFound();
 
-  if (!ehAdmin(sessao) && !(await membroPodeVerEscala(id))) {
+  if (!ehAdmin(sessao) && !(await membroPodeVerEscala(id, sessao.integranteId))) {
     redirect("/escalas");
   }
 

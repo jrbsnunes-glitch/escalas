@@ -97,3 +97,33 @@ export function juntarNomes(nomes: string[]) {
   if (nomes.length === 2) return `${nomes[0]} e ${nomes[1]}`;
   return `${nomes.slice(0, -1).join(", ")} e ${nomes[nomes.length - 1]}`;
 }
+
+const INDICE_DIA: Record<string, number> = {
+  Sun: 0,
+  Mon: 1,
+  Tue: 2,
+  Wed: 3,
+  Thu: 4,
+  Fri: 5,
+  Sat: 6,
+};
+
+export function ymdMaisDias(ymd: string, dias: number) {
+  const [ano, mes, dia] = ymd.split("-").map(Number);
+  return new Date(Date.UTC(ano, mes - 1, dia + dias)).toISOString().slice(0, 10);
+}
+
+export function indiceDiaSemanaSaoPaulo(agora = new Date()) {
+  const nome = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    weekday: "short",
+  }).format(agora);
+  return INDICE_DIA[nome] ?? 0;
+}
+
+/** Inclusive end of this week's Sunday (today, if today is Sunday). */
+export function fimDoDomingoDaSemanaSaoPaulo(agora = new Date()) {
+  const { ymd } = partesHojeSaoPaulo(agora);
+  const diasAteDomingo = (7 - indiceDiaSemanaSaoPaulo(agora)) % 7;
+  return new Date(`${ymdMaisDias(ymd, diasAteDomingo)}T23:59:59.999-03:00`);
+}

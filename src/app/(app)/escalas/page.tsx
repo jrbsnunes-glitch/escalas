@@ -7,9 +7,8 @@ import { cabecalhoEscala } from "@/lib/escala";
 import { includeEscala, serializarEscala } from "@/lib/serializers";
 import {
   ehAdmin,
-  escolherEscalasDaSemana,
   exigirSessaoPage,
-  inicioDoDiaSaoPaulo,
+  whereEscalasVisiveisMembro,
 } from "@/lib/acesso";
 import { alocacoesComPedidoPendente, opcoesPedidoTroca } from "@/lib/troca";
 import { cookies } from "next/headers";
@@ -23,12 +22,11 @@ export default async function EscalasPage() {
   const admin = ehAdmin(sessao);
 
   if (!admin) {
-    const futuras = await prisma.escala.findMany({
-      where: { data: { gte: inicioDoDiaSaoPaulo() }, especial: false },
+    const daSemana = await prisma.escala.findMany({
+      where: whereEscalasVisiveisMembro(sessao.integranteId),
       include: includeEscala,
       orderBy: { data: "asc" },
     });
-    const daSemana = escolherEscalasDaSemana(futuras);
     const [opcoes, pendentes] = await Promise.all([
       opcoesPedidoTroca(sessao.integranteId),
       alocacoesComPedidoPendente(sessao.integranteId),
@@ -38,7 +36,7 @@ export default async function EscalasPage() {
       <>
         <PageHeader
           titulo="Escala da semana"
-          descricao="Confira o culto da semana, ouça no YouTube ou baixe os arquivos da escala."
+          descricao="Confira os cultos até o domingo e as escalas em que você está. Ouça no YouTube ou baixe os arquivos."
           acao={
             <BotaoLink href="/escalas/especiais" variant="ghost">
               Escalas Especiais

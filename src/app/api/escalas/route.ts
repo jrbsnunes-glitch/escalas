@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
-  escolherEscalasDaSemana,
   ehAdmin,
+  idsEscalasVisiveisMembro,
   recusarSeNaoAdmin,
   recusarSeNaoAutenticado,
   validarSessaoApi,
@@ -38,9 +38,11 @@ export async function GET() {
     orderBy: { data: "desc" },
   });
 
-  const visiveis = ehAdmin(sessao)
-    ? escalas
-    : escolherEscalasDaSemana(escalas.filter((item) => !item.especial));
+  let visiveis = escalas;
+  if (!ehAdmin(sessao)) {
+    const ids = await idsEscalasVisiveisMembro(sessao.integranteId);
+    visiveis = escalas.filter((item) => !item.especial && ids.has(item.id));
+  }
 
   return NextResponse.json({
     escalas: visiveis.map(serializarEscala),

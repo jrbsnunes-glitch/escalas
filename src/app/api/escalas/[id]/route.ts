@@ -32,7 +32,7 @@ export async function GET(
   if (!escala) {
     return NextResponse.json({ erro: "Escala não encontrada." }, { status: 404 });
   }
-  if (!ehAdmin(sessao) && !(await membroPodeVerEscala(id))) {
+  if (!ehAdmin(sessao) && !(await membroPodeVerEscala(id, sessao.integranteId))) {
     return NextResponse.json({ erro: "Escala não encontrada." }, { status: 404 });
   }
   return NextResponse.json({ escala: serializarEscala(escala) });

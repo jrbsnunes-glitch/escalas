@@ -31,7 +31,10 @@ export async function GET(
   if (!gate.ok) return gate.resposta;
 
   const { id, arquivoId } = await params;
-  if (!ehAdmin(gate.sessao) && !(await membroPodeVerEscala(id))) {
+  if (
+    !ehAdmin(gate.sessao) &&
+    !(await membroPodeVerEscala(id, gate.sessao.integranteId))
+  ) {
     return NextResponse.json({ erro: "Arquivo não encontrado." }, { status: 404 });
   }
 
