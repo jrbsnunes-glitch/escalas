@@ -69,6 +69,7 @@ export function serializarEscala(escala: EscalaComInclude): EscalaDetalhe {
   return {
     id: escala.id,
     titulo: escala.titulo,
+    diaEnsaio: escala.diaEnsaio ?? "",
     data: escala.data.toISOString(),
     tipo: escala.tipo as EscalaDetalhe["tipo"],
     especial: Boolean(escala.especial),

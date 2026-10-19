@@ -81,6 +81,8 @@ export async function PATCH(
       where: { id },
       data: {
         titulo: corpo.titulo !== undefined ? String(corpo.titulo) : undefined,
+        diaEnsaio:
+          corpo.diaEnsaio !== undefined ? String(corpo.diaEnsaio).trim() : undefined,
         data: corpo.data ? new Date(`${corpo.data}T12:00:00.000Z`) : undefined,
         especial:
           corpo.especial !== undefined ? Boolean(corpo.especial) : undefined,
@@ -138,6 +140,8 @@ export async function PATCH(
       where: { id },
       data: {
         titulo: corpo.titulo !== undefined ? String(corpo.titulo) : undefined,
+        diaEnsaio:
+          corpo.diaEnsaio !== undefined ? String(corpo.diaEnsaio).trim() : undefined,
         data: corpo.data ? new Date(`${corpo.data}T12:00:00.000Z`) : undefined,
         especial:
           corpo.especial !== undefined ? Boolean(corpo.especial) : undefined,

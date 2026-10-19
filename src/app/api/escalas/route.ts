@@ -55,6 +55,7 @@ export async function POST(request: Request) {
 
   const corpo = await request.json();
   const titulo = String(corpo.titulo ?? "").trim();
+  const diaEnsaio = String(corpo.diaEnsaio ?? "").trim();
   const dataTexto = String(corpo.data ?? "");
   const blocos: BlocoManual[] = Array.isArray(corpo.blocos) ? corpo.blocos : [];
 
@@ -84,6 +85,7 @@ export async function POST(request: Request) {
   const escala = await prisma.escala.create({
     data: {
       titulo,
+      diaEnsaio,
       data: new Date(`${dataTexto}T12:00:00.000Z`),
       tipo: "MANUAL",
       especial: Boolean(corpo.especial),

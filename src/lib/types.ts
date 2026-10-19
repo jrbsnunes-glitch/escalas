@@ -94,6 +94,7 @@ export type BlocoResumo = {
 export type EscalaDetalhe = {
   id: string;
   titulo: string;
+  diaEnsaio: string;
   data: string;
   tipo: TipoEscala;
   especial: boolean;

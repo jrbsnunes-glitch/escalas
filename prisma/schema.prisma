@@ -85,6 +85,7 @@ model IntegranteFuncao {
 model Escala {
   id                   String   @id @default(cuid())
   titulo               String
+  diaEnsaio            String   @default("")
   data                 DateTime
   tipo                 String
   especial             Boolean  @default(false)

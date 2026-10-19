@@ -44,6 +44,10 @@ export function linhasPlacaCulto(titulo: string) {
 export function formatarWhatsApp(escala: EscalaDetalhe) {
   const linhas: string[] = [];
   linhas.push(`*${cabecalhoEscala(escala.titulo, escala.data)}*`);
+  if (escala.diaEnsaio.trim()) {
+    linhas.push("");
+    linhas.push(`> *Dia do Ensaio:* \`${escala.diaEnsaio.trim()}\``);
+  }
 
   escala.blocos
     .slice()

@@ -125,6 +125,13 @@ export function EscalaCultos({
   return (
     <div className="space-y-4">
       <IdentificadorEscala id={escala.id} />
+      {escala.diaEnsaio.trim() ? (
+        <p className="text-sm">
+          <span className="text-muted">Dia do Ensaio</span>
+          <span className="mx-2">·</span>
+          <strong>{escala.diaEnsaio.trim()}</strong>
+        </p>
+      ) : null}
       {todosArquivos.length > 0 && (
         <Card>
           <h3 className="mb-2 font-display text-xl">Áudios e cifras</h3>

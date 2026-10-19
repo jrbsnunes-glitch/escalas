@@ -47,6 +47,7 @@ export function EscalaManualForm({
   musicas?: MusicaResumo[];
   inicial?: {
     titulo: string;
+    diaEnsaio?: string;
     data: string;
     blocos: Bloco[];
     especial?: boolean;
@@ -60,6 +61,7 @@ export function EscalaManualForm({
   const [titulo, setTitulo] = useState(
     inicial?.titulo ?? (especialInicial ? "Programação especial" : "Culto"),
   );
+  const [diaEnsaio, setDiaEnsaio] = useState(inicial?.diaEnsaio ?? "");
   const [data, setData] = useState(inicial?.data ?? hoje);
   const [especial, setEspecial] = useState(
     inicial?.especial ?? especialInicial,
@@ -211,7 +213,13 @@ export function EscalaManualForm({
           method: escalaId ? "PATCH" : "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ titulo, data, especial, blocos: limpos }),
+          body: JSON.stringify({
+            titulo,
+            diaEnsaio,
+            data,
+            especial,
+            blocos: limpos,
+          }),
         },
       );
       const dados = await resposta.json();
@@ -261,6 +269,14 @@ export function EscalaManualForm({
           />
         </Campo>
       </div>
+      <Campo label="Dia do Ensaio">
+        <input
+          className="field"
+          value={diaEnsaio}
+          onChange={(e) => setDiaEnsaio(e.target.value)}
+          placeholder="Ex.: quinta 16/10 às 19h"
+        />
+      </Campo>
       <label className="flex items-center gap-2 text-sm">
         <input
           type="checkbox"

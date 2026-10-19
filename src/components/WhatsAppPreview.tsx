@@ -44,6 +44,13 @@ export function WhatsAppPreview({ escala }: { escala: EscalaDetalhe }) {
       <div className="mx-auto max-w-sm">
         <div className="wa-bubble whitespace-pre-wrap px-3 py-3 text-[15px] leading-6">
           <p className="font-bold">{cabecalhoEscala(escala.titulo, escala.data)}</p>
+          {escala.diaEnsaio.trim() ? (
+            <p className="mt-2">
+              {"> "}
+              <span className="font-bold">Dia do Ensaio:</span>{" "}
+              <span className="wa-code">{escala.diaEnsaio.trim()}</span>
+            </p>
+          ) : null}
           {escala.blocos
             .slice()
             .sort((a, b) => a.ordem - b.ordem)

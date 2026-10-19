@@ -50,6 +50,7 @@ export default async function EditarEscalaPage({
           musicas={musicas.map(serializarMusica)}
           inicial={{
             titulo: escala.titulo,
+            diaEnsaio: escala.diaEnsaio,
             data,
             especial: escala.especial,
             arquivos: escala.arquivos,

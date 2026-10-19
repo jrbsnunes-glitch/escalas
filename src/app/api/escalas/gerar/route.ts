@@ -12,6 +12,7 @@ export async function POST(request: Request) {
 
   const corpo = await request.json();
   const titulo = String(corpo.titulo ?? "Escala gerada").trim();
+  const diaEnsaio = String(corpo.diaEnsaio ?? "").trim();
   const dataTexto = String(corpo.data ?? "");
   if (!dataTexto) {
     return NextResponse.json({ erro: "Informe a data da escala." }, { status: 400 });
@@ -63,6 +64,7 @@ export async function POST(request: Request) {
   const escala = await prisma.escala.create({
     data: {
       titulo,
+      diaEnsaio,
       data: new Date(`${dataTexto}T12:00:00.000Z`),
       tipo: "AUTO",
       quantidadeEscalas: config.quantidadeEscalas,

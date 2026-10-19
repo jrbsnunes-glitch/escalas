@@ -24,6 +24,7 @@ export function GeracaoAutomatica({
   const router = useRouter();
   const hoje = new Date().toISOString().slice(0, 10);
   const [titulo, setTitulo] = useState("Escala vocal");
+  const [diaEnsaio, setDiaEnsaio] = useState("");
   const [data, setData] = useState(hoje);
   const [quantidadeEscalas, setQuantidadeEscalas] = useState(padrao.quantidadeEscalas);
   const [quantidadePorEscala, setQuantidadePorEscala] = useState(
@@ -84,6 +85,7 @@ export function GeracaoAutomatica({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           titulo,
+          diaEnsaio,
           data,
           quantidadeEscalas,
           quantidadePorEscala,
@@ -120,6 +122,16 @@ export function GeracaoAutomatica({
             required
           />
         </Campo>
+      </div>
+      <Campo label="Dia do Ensaio">
+        <input
+          className="field"
+          value={diaEnsaio}
+          onChange={(e) => setDiaEnsaio(e.target.value)}
+          placeholder="Ex.: quinta 16/10 às 19h"
+        />
+      </Campo>
+      <div className="grid gap-4 sm:grid-cols-2">
         <Campo label="Quantidade de escalas (N)">
           <input
             className="field"

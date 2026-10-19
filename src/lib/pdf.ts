@@ -56,16 +56,24 @@ export function gerarPdfEscala(escala: EscalaDetalhe) {
   const largura = 210 - margem * 2;
   let y = 22;
 
+  const ensaio = escala.diaEnsaio.trim();
+  const topo = ensaio ? 40 : 32;
   doc.setFillColor(243, 239, 228);
-  doc.rect(0, 0, 210, 32, "F");
+  doc.rect(0, 0, 210, topo, "F");
   doc.setFillColor(201, 162, 39);
-  doc.rect(0, 30, 210, 2, "F");
+  doc.rect(0, topo - 2, 210, 2, "F");
   doc.setTextColor(26, 36, 32);
   doc.setFont("times", "bold");
   doc.setFontSize(16);
   doc.text(cabecalhoEscala(escala.titulo, escala.data), margem, 18);
+  if (ensaio) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(90, 96, 90);
+    doc.text(`Dia do Ensaio: ${ensaio}`, margem, 28);
+  }
 
-  y = 44;
+  y = topo + 12;
   doc.setTextColor(30, 36, 33);
 
   escala.blocos
