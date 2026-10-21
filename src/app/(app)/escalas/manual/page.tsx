@@ -4,6 +4,9 @@ import { serializarMusica } from "@/lib/musica";
 import { prisma } from "@/lib/prisma";
 import { serializarIntegrante } from "@/lib/serializers";
 import { exigirAdmin } from "@/lib/acesso";
+import { alinharFuncoesEngenheiroSom } from "@/lib/funcoes-montagem";
+
+export const dynamic = "force-dynamic";
 
 export default async function EscalaManualPage({
   searchParams,
@@ -11,6 +14,7 @@ export default async function EscalaManualPage({
   searchParams: Promise<{ especial?: string }>;
 }) {
   await exigirAdmin();
+  await alinharFuncoesEngenheiroSom();
   const especial = (await searchParams).especial === "1";
   const [cantores, funcoes, musicas] = await Promise.all([
     prisma.integrante.findMany({

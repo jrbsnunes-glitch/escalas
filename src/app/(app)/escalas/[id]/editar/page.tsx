@@ -8,6 +8,9 @@ import { sessaoDaAlocacao } from "@/lib/escala";
 
 import { EscalaIdCopiar } from "@/components/EscalaIdCopiar";
 import { exigirAdmin } from "@/lib/acesso";
+import { alinharFuncoesEngenheiroSom } from "@/lib/funcoes-montagem";
+
+export const dynamic = "force-dynamic";
 
 export default async function EditarEscalaPage({
   params,
@@ -15,6 +18,7 @@ export default async function EditarEscalaPage({
   params: Promise<{ id: string }>;
 }) {
   await exigirAdmin();
+  await alinharFuncoesEngenheiroSom();
   const { id } = await params;
   const [registro, cantores, funcoes, musicas] = await Promise.all([
     prisma.escala.findUnique({ where: { id }, include: includeEscala }),

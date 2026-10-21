@@ -9,6 +9,7 @@ import { Botao, BotaoLink, Campo } from "./ui";
 import { arquivosDaMusica, arquivosSemMusica } from "@/lib/arquivo-escala-ui";
 import { enviarArquivosEscala } from "@/lib/enviar-arquivos-escala";
 import { cabecalhoEscala, rotuloSessao } from "@/lib/escala";
+import { ehFuncaoMontagemEngenheiro } from "@/lib/funcoes-montagem";
 import {
   ehFuncaoDeMusico,
   ehFuncaoEngenheiroSom,
@@ -45,6 +46,30 @@ function primeiraFuncao(funcoes: Funcao[], sessao: SessaoEscala) {
   return daSessao[0]?.id ?? "";
 }
 
+function idsFuncoesEngenheiro(funcoes: Funcao[]) {
+  return new Set(
+    funcoes.filter(ehFuncaoMontagemEngenheiro).map((funcao) => funcao.id),
+  );
+}
+
+function prepararBlocosIniciais(
+  blocos: Bloco[],
+  funcoes: Funcao[],
+  engenheiroSomId: string,
+) {
+  const engenheiroIds = idsFuncoesEngenheiro(funcoes);
+  let extraido = engenheiroSomId;
+  const limpos = blocos.map((bloco) => ({
+    ...bloco,
+    alocacoes: bloco.alocacoes.filter((linha) => {
+      if (!engenheiroIds.has(linha.funcaoId)) return true;
+      if (!extraido && linha.integranteId) extraido = linha.integranteId;
+      return false;
+    }),
+  }));
+  return { engenheiroSomId: extraido, blocos: limpos };
+}
+
 export function EscalaManualForm({
   integrantes,
   funcoes,
@@ -74,14 +99,7 @@ export function EscalaManualForm({
     inicial?.titulo ?? (especialInicial ? "Programação especial" : "Culto"),
   );
   const [diaEnsaio, setDiaEnsaio] = useState(inicial?.diaEnsaio ?? "");
-  const [engenheiroSomId, setEngenheiroSomId] = useState(
-    inicial?.engenheiroSomId ?? "",
-  );
-  const [data, setData] = useState(inicial?.data ?? hoje);
-  const [especial, setEspecial] = useState(
-    inicial?.especial ?? especialInicial,
-  );
-  const [blocos, setBlocos] = useState<Bloco[]>(
+  const montagemInicial = prepararBlocosIniciais(
     inicial?.blocos.map((bloco) => ({ ...bloco, direcao: bloco.direcao ?? "" })) ?? [
       {
         nome: "PRIMEIRO CULTO",
@@ -102,7 +120,17 @@ export function EscalaManualForm({
         ],
       },
     ],
+    funcoes,
+    inicial?.engenheiroSomId ?? "",
   );
+  const [engenheiroSomId, setEngenheiroSomId] = useState(
+    montagemInicial.engenheiroSomId,
+  );
+  const [data, setData] = useState(inicial?.data ?? hoje);
+  const [especial, setEspecial] = useState(
+    inicial?.especial ?? especialInicial,
+  );
+  const [blocos, setBlocos] = useState<Bloco[]>(montagemInicial.blocos);
   const [arquivosPorLinha, setArquivosPorLinha] = useState<Record<string, File[]>>({});
   const [arquivosExistentes, setArquivosExistentes] = useState<ArquivoEscalaResumo[]>(
     inicial?.arquivos ?? [],
@@ -560,7 +588,9 @@ function SessaoMontagem({
                   }
                 >
                   <option value="">Sem função</option>
-                  {funcoes.map((funcao) => (
+                  {funcoes
+                    .filter((funcao) => !ehFuncaoMontagemEngenheiro(funcao))
+                    .map((funcao) => (
                     <option key={funcao.id} value={funcao.id}>
                       {funcao.nome}
                     </option>

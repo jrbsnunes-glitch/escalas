@@ -4,9 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { configPadrao } from "@/lib/algoritmo";
 import { exigirAdmin } from "@/lib/acesso";
 import { serializarIntegrante } from "@/lib/serializers";
+import { alinharFuncoesEngenheiroSom } from "@/lib/funcoes-montagem";
 
 export default async function EscalaAutomaticaPage() {
   await exigirAdmin();
+  await alinharFuncoesEngenheiroSom();
   const [cantores, parametros, integrantes] = await Promise.all([
     prisma.integrante.count({ where: { ativo: true } }),
     prisma.parametro.findMany({
