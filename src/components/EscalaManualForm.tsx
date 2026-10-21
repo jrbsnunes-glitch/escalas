@@ -9,10 +9,10 @@ import { Botao, BotaoLink, Campo } from "./ui";
 import { arquivosDaMusica, arquivosSemMusica } from "@/lib/arquivo-escala-ui";
 import { enviarArquivosEscala } from "@/lib/enviar-arquivos-escala";
 import { cabecalhoEscala, rotuloSessao } from "@/lib/escala";
-import { ehFuncaoMontagemEngenheiro } from "@/lib/funcoes-montagem";
 import {
   ehFuncaoDeMusico,
   ehFuncaoEngenheiroSom,
+  ehFuncaoMontagemEngenheiro,
   ehIntegranteEngenheiroSom,
 } from "@/lib/integrante";
 import type {

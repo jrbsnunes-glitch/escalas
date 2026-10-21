@@ -40,8 +40,15 @@ export function ehIntegranteEngenheiroSom(pessoa: {
   return ehPerfilEngenheiroSom(pessoa.perfil);
 }
 
+export function ehFuncaoMontagemEngenheiro(funcao: {
+  nome: string;
+  grupo?: string;
+}) {
+  return funcao.grupo === "ENGENHEIRO" || ehFuncaoEngenheiroSom(funcao.nome);
+}
+
 export function ehFuncaoDeMusico(funcao: { nome: string; grupo: string }) {
-  if (funcao.grupo === "ENGENHEIRO" || ehFuncaoEngenheiroSom(funcao.nome)) {
+  if (ehFuncaoMontagemEngenheiro(funcao)) {
     return false;
   }
   return funcao.grupo === "MUSICO";
