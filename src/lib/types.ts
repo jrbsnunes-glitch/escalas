@@ -3,7 +3,16 @@ export type TratamentoSobra = "descartar" | "distribuir" | "avisar";
 export type CriterioId = "ancora" | "genero" | "diversidade" | "afinacao";
 export type TipoDispositivo = "mobile" | "tablet" | "notebook" | "desktop";
 export type SessaoEscala = "MUSICO" | "CANTOR";
-export type PerfilIntegrante = "CANTOR" | "MUSICO" | "AMBOS";
+export type PerfilIntegrante = "CANTOR" | "MUSICO" | "AMBOS" | "ENGENHEIRO";
+
+export function ehPerfilIntegrante(valor: unknown): valor is PerfilIntegrante {
+  return (
+    valor === "CANTOR" ||
+    valor === "MUSICO" ||
+    valor === "AMBOS" ||
+    valor === "ENGENHEIRO"
+  );
+}
 export type PerfilUsuario = "ADMIN" | "MEMBRO";
 
 export function ehPerfilUsuario(valor: unknown): valor is PerfilUsuario {
@@ -95,6 +104,7 @@ export type EscalaDetalhe = {
   id: string;
   titulo: string;
   diaEnsaio: string;
+  engenheiroSom: IntegranteResumo | null;
   data: string;
   tipo: TipoEscala;
   especial: boolean;

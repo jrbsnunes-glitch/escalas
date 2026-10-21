@@ -5,6 +5,7 @@ import { configPadrao, recalcularBloco } from "@/lib/algoritmo";
 import { deveMostrarParametrosVoz } from "@/lib/integrante";
 import { parseDataIso } from "@/lib/datas";
 import { serializarIntegrante } from "@/lib/serializers";
+import { ehPerfilIntegrante } from "@/lib/types";
 import type { ConfigGeracao } from "@/lib/types";
 
 const include = { funcoes: { include: { funcao: true } } };
@@ -36,12 +37,7 @@ export async function PATCH(
   const funcoesIds: string[] | undefined = Array.isArray(corpo.funcoesIds)
     ? corpo.funcoesIds.map(String)
     : undefined;
-  const perfil =
-    corpo.perfil === "MUSICO" ||
-    corpo.perfil === "AMBOS" ||
-    corpo.perfil === "CANTOR"
-      ? String(corpo.perfil)
-      : undefined;
+  const perfil = ehPerfilIntegrante(corpo.perfil) ? corpo.perfil : undefined;
 
   const existente = await prisma.integrante.findUnique({
     where: { id },

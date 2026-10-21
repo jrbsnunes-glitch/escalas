@@ -4,6 +4,7 @@ import { recusarSeNaoAdmin } from "@/lib/acesso";
 import { deveMostrarParametrosVoz } from "@/lib/integrante";
 import { parseDataIso } from "@/lib/datas";
 import { serializarIntegrante } from "@/lib/serializers";
+import { ehPerfilIntegrante } from "@/lib/types";
 
 const include = { funcoes: { include: { funcao: true } } };
 
@@ -38,10 +39,7 @@ export async function POST(request: Request) {
   const funcoesIds: string[] = Array.isArray(corpo.funcoesIds)
     ? corpo.funcoesIds.map(String)
     : [];
-  const perfil =
-    corpo.perfil === "MUSICO" || corpo.perfil === "AMBOS"
-      ? String(corpo.perfil)
-      : "CANTOR";
+  const perfil = ehPerfilIntegrante(corpo.perfil) ? corpo.perfil : "CANTOR";
   const funcoesMarcadas = funcoesIds.length
     ? await prisma.funcao.findMany({ where: { id: { in: funcoesIds } } })
     : [];

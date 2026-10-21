@@ -51,6 +51,7 @@ export default async function EditarEscalaPage({
           inicial={{
             titulo: escala.titulo,
             diaEnsaio: escala.diaEnsaio,
+            engenheiroSomId: escala.engenheiroSom?.id ?? "",
             data,
             especial: escala.especial,
             arquivos: escala.arquivos,

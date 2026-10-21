@@ -16,6 +16,7 @@ import { prisma } from "@/lib/prisma";
 function rotuloPapel(perfil: string) {
   if (perfil === "MUSICO") return "Músico";
   if (perfil === "AMBOS") return "Cantor e músico";
+  if (perfil === "ENGENHEIRO") return "Engenheiro de som";
   return "Cantor";
 }
 

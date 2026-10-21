@@ -48,6 +48,12 @@ export function formatarWhatsApp(escala: EscalaDetalhe) {
     linhas.push("");
     linhas.push(`> *Dia do Ensaio:* \`${escala.diaEnsaio.trim()}\``);
   }
+  if (escala.engenheiroSom?.nome.trim()) {
+    if (!escala.diaEnsaio.trim()) linhas.push("");
+    linhas.push(
+      `> *Engenheiro de Som:* \`${escala.engenheiroSom.nome.trim()}\``,
+    );
+  }
 
   escala.blocos
     .slice()

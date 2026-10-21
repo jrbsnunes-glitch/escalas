@@ -65,6 +65,7 @@ export function FuncoesAdmin({ funcoes }: { funcoes: Funcao[] }) {
           <select className="field" value={grupo} onChange={(e) => setGrupo(e.target.value)}>
             <option value="MUSICO">Músicos</option>
             <option value="CANTOR">Cantores</option>
+            <option value="ENGENHEIRO">Engenheiro de som</option>
           </select>
         </Campo>
         <div className="sm:self-end">
@@ -77,7 +78,12 @@ export function FuncoesAdmin({ funcoes }: { funcoes: Funcao[] }) {
             <div>
               <p className="font-medium">{funcao.nome}</p>
               <p className="text-xs text-muted">
-                {funcao.grupo === "CANTOR" ? "Cantores" : "Músicos"} ·{" "}
+                {funcao.grupo === "CANTOR"
+                  ? "Cantores"
+                  : funcao.grupo === "ENGENHEIRO"
+                    ? "Engenheiro de som"
+                    : "Músicos"}{" "}
+                ·{" "}
                 {funcao.ativo ? "Ativa" : "Inativa"}
               </p>
             </div>

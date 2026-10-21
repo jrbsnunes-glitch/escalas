@@ -168,6 +168,7 @@ export function CantorForm({
           <option value="CANTOR">Cantor</option>
           <option value="MUSICO">Músico</option>
           <option value="AMBOS">Cantor e músico</option>
+          <option value="ENGENHEIRO">Engenheiro de som</option>
         </select>
       </Campo>
       <Campo label="Funções que pode exercer (opcional)">

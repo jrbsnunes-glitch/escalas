@@ -29,6 +29,27 @@ export type IntegranteContagemPapel = {
   funcoes: { funcao: { nome: string } }[];
 };
 
+export function ehPerfilEngenheiroSom(perfil: string) {
+  return perfil === "ENGENHEIRO";
+}
+
+export function ehIntegranteEngenheiroSom(pessoa: {
+  perfil: string;
+  funcoes: { nome: string }[];
+}) {
+  return (
+    ehPerfilEngenheiroSom(pessoa.perfil) ||
+    pessoa.funcoes.some((funcao) => ehFuncaoEngenheiroSom(funcao.nome))
+  );
+}
+
+export function rotuloPerfilMinisterio(perfil: string) {
+  if (perfil === "MUSICO") return "Músico";
+  if (perfil === "AMBOS") return "Cantor e músico";
+  if (perfil === "ENGENHEIRO") return "Engenheiro de som";
+  return "Cantor";
+}
+
 export function contagemComponentesAtivos(integrantes: IntegranteContagemPapel[]) {
   let cantores = 0;
   let musicos = 0;
@@ -42,9 +63,10 @@ export function contagemComponentesAtivos(integrantes: IntegranteContagemPapel[]
       musicos += 1;
     }
     if (
-      integrante.funcoes.some((item) =>
-        ehFuncaoEngenheiroSom(item.funcao.nome),
-      )
+      ehIntegranteEngenheiroSom({
+        perfil: integrante.perfil,
+        funcoes: integrante.funcoes.map((item) => item.funcao),
+      })
     ) {
       engenheirosSom += 1;
     }
@@ -62,6 +84,8 @@ export function deveMostrarParametrosVoz(
   perfil: string,
   funcoes: { nome: string }[],
 ) {
-  if (perfil !== "MUSICO") return true;
-  return funcoes.some((funcao) => ehFuncaoVocal(funcao.nome));
+  if (perfil === "MUSICO" || perfil === "ENGENHEIRO") {
+    return funcoes.some((funcao) => ehFuncaoVocal(funcao.nome));
+  }
+  return true;
 }

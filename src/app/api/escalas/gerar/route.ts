@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { recusarSeNaoAdmin } from "@/lib/acesso";
 import { configPadrao, gerarEscalas } from "@/lib/algoritmo";
 import { deveMostrarParametrosVoz } from "@/lib/integrante";
+import { resolverEngenheiroSomId } from "@/lib/engenheiro-som";
 import { includeEscala, serializarEscala } from "@/lib/serializers";
 import type { ConfigGeracao, CriterioId, TratamentoSobra } from "@/lib/types";
 
@@ -13,6 +14,10 @@ export async function POST(request: Request) {
   const corpo = await request.json();
   const titulo = String(corpo.titulo ?? "Escala gerada").trim();
   const diaEnsaio = String(corpo.diaEnsaio ?? "").trim();
+  const engenheiro = await resolverEngenheiroSomId(corpo.engenheiroSomId);
+  if (!engenheiro.ok) {
+    return NextResponse.json({ erro: engenheiro.erro }, { status: 400 });
+  }
   const dataTexto = String(corpo.data ?? "");
   if (!dataTexto) {
     return NextResponse.json({ erro: "Informe a data da escala." }, { status: 400 });
@@ -65,6 +70,7 @@ export async function POST(request: Request) {
     data: {
       titulo,
       diaEnsaio,
+      engenheiroSomId: engenheiro.id,
       data: new Date(`${dataTexto}T12:00:00.000Z`),
       tipo: "AUTO",
       quantidadeEscalas: config.quantidadeEscalas,

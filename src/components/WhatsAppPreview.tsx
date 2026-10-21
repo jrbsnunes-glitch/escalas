@@ -51,6 +51,13 @@ export function WhatsAppPreview({ escala }: { escala: EscalaDetalhe }) {
               <span className="wa-code">{escala.diaEnsaio.trim()}</span>
             </p>
           ) : null}
+          {escala.engenheiroSom?.nome.trim() ? (
+            <p className={escala.diaEnsaio.trim() ? "" : "mt-2"}>
+              {"> "}
+              <span className="font-bold">Engenheiro de Som:</span>{" "}
+              <span className="wa-code">{escala.engenheiroSom.nome.trim()}</span>
+            </p>
+          ) : null}
           {escala.blocos
             .slice()
             .sort((a, b) => a.ordem - b.ordem)

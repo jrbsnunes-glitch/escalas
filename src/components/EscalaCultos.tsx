@@ -132,6 +132,19 @@ export function EscalaCultos({
           <strong>{escala.diaEnsaio.trim()}</strong>
         </p>
       ) : null}
+      {escala.engenheiroSom?.nome.trim() ? (
+        <p
+          className={`text-sm ${
+            integranteLogadoId && escala.engenheiroSom.id === integranteLogadoId
+              ? "rounded-xl border border-gold bg-gold/10 px-3 py-2"
+              : ""
+          }`}
+        >
+          <span className="text-muted">Engenheiro de Som</span>
+          <span className="mx-2">·</span>
+          <strong>{escala.engenheiroSom.nome.trim()}</strong>
+        </p>
+      ) : null}
       {todosArquivos.length > 0 && (
         <Card>
           <h3 className="mb-2 font-display text-xl">Áudios e cifras</h3>

@@ -7,6 +7,7 @@ import {
   recusarSeNaoAutenticado,
   validarSessaoApi,
 } from "@/lib/acesso";
+import { resolverEngenheiroSomId } from "@/lib/engenheiro-som";
 import { includeEscala, serializarEscala } from "@/lib/serializers";
 import { configPadrao, recalcularBloco } from "@/lib/algoritmo";
 import type { ConfigGeracao } from "@/lib/types";
@@ -62,6 +63,14 @@ export async function PATCH(
     }
   }
 
+  const engenheiro =
+    corpo.engenheiroSomId !== undefined
+      ? await resolverEngenheiroSomId(corpo.engenheiroSomId)
+      : null;
+  if (engenheiro && !engenheiro.ok) {
+    return NextResponse.json({ erro: engenheiro.erro }, { status: 400 });
+  }
+
   if (Array.isArray(corpo.blocos)) {
     await prisma.bloco.deleteMany({ where: { escalaId: id } });
 
@@ -83,6 +92,7 @@ export async function PATCH(
         titulo: corpo.titulo !== undefined ? String(corpo.titulo) : undefined,
         diaEnsaio:
           corpo.diaEnsaio !== undefined ? String(corpo.diaEnsaio).trim() : undefined,
+        engenheiroSomId: engenheiro ? engenheiro.id : undefined,
         data: corpo.data ? new Date(`${corpo.data}T12:00:00.000Z`) : undefined,
         especial:
           corpo.especial !== undefined ? Boolean(corpo.especial) : undefined,
@@ -142,6 +152,7 @@ export async function PATCH(
         titulo: corpo.titulo !== undefined ? String(corpo.titulo) : undefined,
         diaEnsaio:
           corpo.diaEnsaio !== undefined ? String(corpo.diaEnsaio).trim() : undefined,
+        engenheiroSomId: engenheiro ? engenheiro.id : undefined,
         data: corpo.data ? new Date(`${corpo.data}T12:00:00.000Z`) : undefined,
         especial:
           corpo.especial !== undefined ? Boolean(corpo.especial) : undefined,

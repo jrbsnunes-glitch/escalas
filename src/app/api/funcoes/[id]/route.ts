@@ -16,7 +16,9 @@ export async function PATCH(
     data: {
       nome: corpo.nome !== undefined ? String(corpo.nome) : undefined,
       grupo:
-        corpo.grupo === "CANTOR" || corpo.grupo === "MUSICO"
+        corpo.grupo === "CANTOR" ||
+        corpo.grupo === "MUSICO" ||
+        corpo.grupo === "ENGENHEIRO"
           ? String(corpo.grupo)
           : undefined,
       ordem: corpo.ordem !== undefined ? Number(corpo.ordem) : undefined,

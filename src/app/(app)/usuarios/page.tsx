@@ -3,7 +3,7 @@ import { UsuariosAdmin } from "@/components/UsuariosAdmin";
 import { exigirAdmin } from "@/lib/acesso";
 import { prisma } from "@/lib/prisma";
 import { includeUsuario, serializarUsuario } from "@/lib/usuario";
-import { ehPerfilUsuario } from "@/lib/types";
+import { ehPerfilIntegrante, ehPerfilUsuario } from "@/lib/types";
 
 export default async function UsuariosPage() {
   const sessao = await exigirAdmin();
@@ -29,7 +29,7 @@ export default async function UsuariosPage() {
           integrantes={integrantes.map((item) => ({
             id: item.id,
             nome: item.nome,
-            perfil: item.perfil as "CANTOR" | "MUSICO" | "AMBOS",
+            perfil: ehPerfilIntegrante(item.perfil) ? item.perfil : "CANTOR",
             ativo: item.ativo,
           }))}
           usuarios={usuarios

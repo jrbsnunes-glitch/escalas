@@ -56,6 +56,7 @@ async function main() {
     { nome: "Violão", grupo: "MUSICO", ordem: 5 },
     { nome: "Lead Vocal", grupo: "CANTOR", ordem: 6 },
     { nome: "Backing Vocal", grupo: "CANTOR", ordem: 7 },
+    { nome: "Engenheiro de Som", grupo: "ENGENHEIRO", ordem: 8 },
   ];
 
   const funcaoIds: Record<string, string> = {};
@@ -69,11 +70,17 @@ async function main() {
   }
 
   const vozes = new Set(["Lead Vocal", "Backing Vocal"]);
+  const engenheiroSom = new Set(["Engenheiro de Som"]);
   function perfilDe(nomesFuncoes: string[]) {
-    const temMusico = nomesFuncoes.some((nome) => !vozes.has(nome));
+    const temEngenheiro = nomesFuncoes.some((nome) => engenheiroSom.has(nome));
+    const temMusico = nomesFuncoes.some(
+      (nome) => !vozes.has(nome) && !engenheiroSom.has(nome),
+    );
     const temCantor = nomesFuncoes.some((nome) => vozes.has(nome));
     if (temMusico && temCantor) return "AMBOS";
     if (temMusico) return "MUSICO";
+    if (temCantor) return "CANTOR";
+    if (temEngenheiro) return "ENGENHEIRO";
     return "CANTOR";
   }
 
@@ -190,6 +197,15 @@ async function main() {
       leadVocal: "NÃO",
       backingVocal: "Sabe cantar em vozes",
       funcoes: ["Backing Vocal", "Guitarra"],
+    },
+    {
+      nome: "Paulo",
+      voz: "",
+      afinacao: 0,
+      tipoVoz: "",
+      leadVocal: "",
+      backingVocal: "",
+      funcoes: ["Engenheiro de Som"],
     },
   ];
 

@@ -27,10 +27,11 @@ function ordenarPorNome(a: ComponenteImpressao, b: ComponenteImpressao) {
 
 function filtrarSecao(
   lista: ComponenteImpressao[],
-  secao: "CANTOR" | "MUSICO",
+  secao: "CANTOR" | "MUSICO" | "ENGENHEIRO",
 ) {
   return lista
     .filter((item) => {
+      if (secao === "ENGENHEIRO") return item.perfil === "ENGENHEIRO";
       if (item.perfil === "AMBOS") return true;
       if (secao === "CANTOR") return item.perfil === "CANTOR";
       return item.perfil === "MUSICO";
@@ -165,10 +166,18 @@ export function gerarPdfComponentes(
     margem,
     largura,
   );
-  escreverSecao(
+  y = escreverSecao(
     doc,
     rotuloSessao("MUSICO"),
     filtrarSecao(componentes, "MUSICO"),
+    y,
+    margem,
+    largura,
+  );
+  escreverSecao(
+    doc,
+    "Engenheiros de som",
+    filtrarSecao(componentes, "ENGENHEIRO"),
     y,
     margem,
     largura,

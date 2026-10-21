@@ -4,7 +4,8 @@ import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { Botao, Campo } from "./ui";
-import { CRITERIOS, type ConfigGeracao, type CriterioId } from "@/lib/types";
+import { ehIntegranteEngenheiroSom } from "@/lib/integrante";
+import { CRITERIOS, type ConfigGeracao, type CriterioId, type IntegranteResumo } from "@/lib/types";
 
 type Parametro = {
   categoria: string;
@@ -16,16 +17,23 @@ export function GeracaoAutomatica({
   totalAtivos,
   parametros,
   padrao,
+  integrantes = [],
 }: {
   totalAtivos: number;
   parametros: Parametro[];
   padrao: ConfigGeracao;
+  integrantes?: IntegranteResumo[];
 }) {
   const router = useRouter();
   const hoje = new Date().toISOString().slice(0, 10);
   const [titulo, setTitulo] = useState("Escala vocal");
   const [diaEnsaio, setDiaEnsaio] = useState("");
+  const [engenheiroSomId, setEngenheiroSomId] = useState("");
   const [data, setData] = useState(hoje);
+  const pessoasEngenheiros = useMemo(
+    () => integrantes.filter(ehIntegranteEngenheiroSom),
+    [integrantes],
+  );
   const [quantidadeEscalas, setQuantidadeEscalas] = useState(padrao.quantidadeEscalas);
   const [quantidadePorEscala, setQuantidadePorEscala] = useState(
     padrao.quantidadePorEscala,
@@ -86,6 +94,7 @@ export function GeracaoAutomatica({
         body: JSON.stringify({
           titulo,
           diaEnsaio,
+          engenheiroSomId,
           data,
           quantidadeEscalas,
           quantidadePorEscala,
@@ -130,6 +139,20 @@ export function GeracaoAutomatica({
           onChange={(e) => setDiaEnsaio(e.target.value)}
           placeholder="Ex.: quinta 16/10 às 19h"
         />
+      </Campo>
+      <Campo label="Engenheiro de Som">
+        <select
+          className="field"
+          value={engenheiroSomId}
+          onChange={(e) => setEngenheiroSomId(e.target.value)}
+        >
+          <option value="">Sem engenheiro de som</option>
+          {pessoasEngenheiros.map((pessoa) => (
+            <option key={pessoa.id} value={pessoa.id}>
+              {pessoa.nome}
+            </option>
+          ))}
+        </select>
       </Campo>
       <div className="grid gap-4 sm:grid-cols-2">
         <Campo label="Quantidade de escalas (N)">

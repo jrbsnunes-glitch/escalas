@@ -71,6 +71,7 @@ model Integrante {
   usuario      Usuario?
   pedidosFeitos       PedidoTroca[] @relation("PedidoSolicitante")
   pedidosComoSubstituto PedidoTroca[] @relation("PedidoSubstituto")
+  escalasComoEngenheiro Escala[] @relation("EscalaEngenheiroSom")
 }
 
 model IntegranteFuncao {
@@ -86,6 +87,7 @@ model Escala {
   id                   String   @id @default(cuid())
   titulo               String
   diaEnsaio            String   @default("")
+  engenheiroSomId      String?
   data                 DateTime
   tipo                 String
   especial             Boolean  @default(false)
@@ -98,6 +100,7 @@ model Escala {
   updatedAt            DateTime @updatedAt
   blocos               Bloco[]
   arquivos             ArquivoEscala[]
+  engenheiroSom        Integrante? @relation("EscalaEngenheiroSom", fields: [engenheiroSomId], references: [id], onDelete: SetNull)
 }
 
 model Bloco {

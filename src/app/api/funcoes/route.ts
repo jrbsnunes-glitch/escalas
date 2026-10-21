@@ -26,7 +26,10 @@ export async function POST(request: Request) {
   const funcao = await prisma.funcao.create({
     data: {
       nome,
-      grupo: corpo.grupo === "CANTOR" ? "CANTOR" : "MUSICO",
+      grupo:
+        corpo.grupo === "CANTOR" || corpo.grupo === "ENGENHEIRO"
+          ? String(corpo.grupo)
+          : "MUSICO",
       ordem: Number(corpo.ordem ?? (ultima._max.ordem ?? 0) + 1),
     },
   });

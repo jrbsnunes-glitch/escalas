@@ -7,6 +7,7 @@ import {
   recusarSeNaoAutenticado,
   validarSessaoApi,
 } from "@/lib/acesso";
+import { resolverEngenheiroSomId } from "@/lib/engenheiro-som";
 import { includeEscala, serializarEscala } from "@/lib/serializers";
 import { configPadrao, recalcularBloco } from "@/lib/algoritmo";
 import { cookies } from "next/headers";
@@ -56,6 +57,10 @@ export async function POST(request: Request) {
   const corpo = await request.json();
   const titulo = String(corpo.titulo ?? "").trim();
   const diaEnsaio = String(corpo.diaEnsaio ?? "").trim();
+  const engenheiro = await resolverEngenheiroSomId(corpo.engenheiroSomId);
+  if (!engenheiro.ok) {
+    return NextResponse.json({ erro: engenheiro.erro }, { status: 400 });
+  }
   const dataTexto = String(corpo.data ?? "");
   const blocos: BlocoManual[] = Array.isArray(corpo.blocos) ? corpo.blocos : [];
 
@@ -86,6 +91,7 @@ export async function POST(request: Request) {
     data: {
       titulo,
       diaEnsaio,
+      engenheiroSomId: engenheiro.id,
       data: new Date(`${dataTexto}T12:00:00.000Z`),
       tipo: "MANUAL",
       especial: Boolean(corpo.especial),

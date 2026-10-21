@@ -1,0 +1,18 @@
+services:
+  app:
+    build: .
+    image: escalas-app
+    container_name: escalas-app
+    ports:
+      - "3030:3000"
+    environment:
+      DATABASE_URL: file:/app/data/dev.db
+      AUTH_SECRET: ${AUTH_SECRET:-troque-por-um-segredo-longo}
+      AUTH_COOKIE: escalas_session
+      RESET_DB: ${RESET_DB:-0}
+    volumes:
+      - escalas-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  escalas-data:

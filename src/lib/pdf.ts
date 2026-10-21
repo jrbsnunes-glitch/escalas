@@ -57,7 +57,8 @@ export function gerarPdfEscala(escala: EscalaDetalhe) {
   let y = 22;
 
   const ensaio = escala.diaEnsaio.trim();
-  const topo = ensaio ? 40 : 32;
+  const engenheiro = escala.engenheiroSom?.nome.trim() ?? "";
+  const topo = 32 + (ensaio ? 8 : 0) + (engenheiro ? 8 : 0);
   doc.setFillColor(243, 239, 228);
   doc.rect(0, 0, 210, topo, "F");
   doc.setFillColor(201, 162, 39);
@@ -66,11 +67,19 @@ export function gerarPdfEscala(escala: EscalaDetalhe) {
   doc.setFont("times", "bold");
   doc.setFontSize(16);
   doc.text(cabecalhoEscala(escala.titulo, escala.data), margem, 18);
+  let linhaTopo = 28;
   if (ensaio) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(90, 96, 90);
-    doc.text(`Dia do Ensaio: ${ensaio}`, margem, 28);
+    doc.text(`Dia do Ensaio: ${ensaio}`, margem, linhaTopo);
+    linhaTopo += 8;
+  }
+  if (engenheiro) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(90, 96, 90);
+    doc.text(`Engenheiro de Som: ${engenheiro}`, margem, linhaTopo);
   }
 
   y = topo + 12;

@@ -28,6 +28,7 @@ export function serializarIntegrante(integrante: IntegranteComFuncoes) {
 }
 
 export const includeEscala = {
+  engenheiroSom: { include: { funcoes: { include: { funcao: true } } } },
   arquivos: { orderBy: [{ ordem: "asc" as const }, { createdAt: "asc" as const }] },
   blocos: {
     include: {
@@ -70,6 +71,9 @@ export function serializarEscala(escala: EscalaComInclude): EscalaDetalhe {
     id: escala.id,
     titulo: escala.titulo,
     diaEnsaio: escala.diaEnsaio ?? "",
+    engenheiroSom: escala.engenheiroSom
+      ? serializarIntegrante(escala.engenheiroSom)
+      : null,
     data: escala.data.toISOString(),
     tipo: escala.tipo as EscalaDetalhe["tipo"],
     especial: Boolean(escala.especial),
