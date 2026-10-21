@@ -105,6 +105,10 @@ export function whereEscalasVisiveisMembro(integranteId: string) {
         data: { gte: inicio },
         engenheiroSomId: integranteId,
       },
+      {
+        data: { gte: inicio },
+        blocos: { some: { engenheiroSomId: integranteId } },
+      },
     ],
   };
 }

@@ -55,13 +55,13 @@ export default async function EditarEscalaPage({
           inicial={{
             titulo: escala.titulo,
             diaEnsaio: escala.diaEnsaio,
-            engenheiroSomId: escala.engenheiroSom?.id ?? "",
             data,
             especial: escala.especial,
             arquivos: escala.arquivos,
             blocos: escala.blocos.map((bloco) => ({
               nome: bloco.nome,
               direcao: bloco.direcao,
+              engenheiroSomId: bloco.engenheiroSom?.id ?? "",
               alocacoes: bloco.alocacoes.map((alocacao) => ({
                 integranteId: alocacao.integrante.id,
                 funcaoId: alocacao.funcao?.id ?? "",

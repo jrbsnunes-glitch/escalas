@@ -48,12 +48,6 @@ export function formatarWhatsApp(escala: EscalaDetalhe) {
     linhas.push("");
     linhas.push(`> *Dia do Ensaio:* \`${escala.diaEnsaio.trim()}\``);
   }
-  if (escala.engenheiroSom?.nome.trim()) {
-    if (!escala.diaEnsaio.trim()) linhas.push("");
-    linhas.push(
-      `> *Engenheiro de Som:* \`${escala.engenheiroSom.nome.trim()}\``,
-    );
-  }
 
   escala.blocos
     .slice()
@@ -65,6 +59,12 @@ export function formatarWhatsApp(escala: EscalaDetalhe) {
       if (bloco.direcao.trim()) {
         linhas.push("");
         linhas.push(`> *Direção:* \`${bloco.direcao.trim().toUpperCase()}\``);
+      }
+      if (bloco.engenheiroSom?.nome.trim()) {
+        linhas.push("");
+        linhas.push(
+          `> *Engenheiro de Som:* \`${bloco.engenheiroSom.nome.trim()}\``,
+        );
       }
 
       if (musicos.length) {

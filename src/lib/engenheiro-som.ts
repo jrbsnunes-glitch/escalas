@@ -33,3 +33,13 @@ export async function resolverEngenheiroSomId(valor: unknown) {
 
   return { ok: true as const, id: integrante.id };
 }
+
+export async function resolverEngenheirosSom(valores: unknown[]) {
+  const ids: (string | null)[] = [];
+  for (const valor of valores) {
+    const resultado = await resolverEngenheiroSomId(valor);
+    if (!resultado.ok) return resultado;
+    ids.push(resultado.id);
+  }
+  return { ok: true as const, ids };
+}

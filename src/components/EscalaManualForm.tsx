@@ -30,7 +30,12 @@ type Linha = {
   sessao: SessaoEscala;
   musicaId?: string;
 };
-type Bloco = { nome: string; direcao: string; alocacoes: Linha[] };
+type Bloco = {
+  nome: string;
+  direcao: string;
+  engenheiroSomId: string;
+  alocacoes: Linha[];
+};
 
 function funcoesDaSessao(funcoes: Funcao[], sessao: SessaoEscala) {
   if (sessao === "MUSICO") {
@@ -52,22 +57,17 @@ function idsFuncoesEngenheiro(funcoes: Funcao[]) {
   );
 }
 
-function prepararBlocosIniciais(
-  blocos: Bloco[],
-  funcoes: Funcao[],
-  engenheiroSomId: string,
-) {
+function prepararBlocosIniciais(blocos: Bloco[], funcoes: Funcao[]) {
   const engenheiroIds = idsFuncoesEngenheiro(funcoes);
-  let extraido = engenheiroSomId;
-  const limpos = blocos.map((bloco) => ({
-    ...bloco,
-    alocacoes: bloco.alocacoes.filter((linha) => {
+  return blocos.map((bloco) => {
+    let extraido = bloco.engenheiroSomId ?? "";
+    const alocacoes = bloco.alocacoes.filter((linha) => {
       if (!engenheiroIds.has(linha.funcaoId)) return true;
       if (!extraido && linha.integranteId) extraido = linha.integranteId;
       return false;
-    }),
-  }));
-  return { engenheiroSomId: extraido, blocos: limpos };
+    });
+    return { ...bloco, engenheiroSomId: extraido, alocacoes };
+  });
 }
 
 export function EscalaManualForm({
@@ -84,7 +84,6 @@ export function EscalaManualForm({
   inicial?: {
     titulo: string;
     diaEnsaio?: string;
-    engenheiroSomId?: string;
     data: string;
     blocos: Bloco[];
     especial?: boolean;
@@ -99,38 +98,40 @@ export function EscalaManualForm({
     inicial?.titulo ?? (especialInicial ? "Programação especial" : "Culto"),
   );
   const [diaEnsaio, setDiaEnsaio] = useState(inicial?.diaEnsaio ?? "");
-  const montagemInicial = prepararBlocosIniciais(
-    inicial?.blocos.map((bloco) => ({ ...bloco, direcao: bloco.direcao ?? "" })) ?? [
-      {
-        nome: "PRIMEIRO CULTO",
-        direcao: "",
-        alocacoes: [
-          {
-            integranteId: "",
-            funcaoId: primeiraFuncao(funcoes, "MUSICO"),
-            sessao: "MUSICO",
-            musicaId: "",
-          },
-          {
-            integranteId: "",
-            funcaoId: primeiraFuncao(funcoes, "CANTOR"),
-            sessao: "CANTOR",
-            musicaId: "",
-          },
-        ],
-      },
-    ],
-    funcoes,
-    inicial?.engenheiroSomId ?? "",
-  );
-  const [engenheiroSomId, setEngenheiroSomId] = useState(
-    montagemInicial.engenheiroSomId,
-  );
   const [data, setData] = useState(inicial?.data ?? hoje);
   const [especial, setEspecial] = useState(
     inicial?.especial ?? especialInicial,
   );
-  const [blocos, setBlocos] = useState<Bloco[]>(montagemInicial.blocos);
+  const [blocos, setBlocos] = useState<Bloco[]>(
+    prepararBlocosIniciais(
+      inicial?.blocos.map((bloco) => ({
+        ...bloco,
+        direcao: bloco.direcao ?? "",
+        engenheiroSomId: bloco.engenheiroSomId ?? "",
+      })) ?? [
+        {
+          nome: "PRIMEIRO CULTO",
+          direcao: "",
+          engenheiroSomId: "",
+          alocacoes: [
+            {
+              integranteId: "",
+              funcaoId: primeiraFuncao(funcoes, "MUSICO"),
+              sessao: "MUSICO",
+              musicaId: "",
+            },
+            {
+              integranteId: "",
+              funcaoId: primeiraFuncao(funcoes, "CANTOR"),
+              sessao: "CANTOR",
+              musicaId: "",
+            },
+          ],
+        },
+      ],
+      funcoes,
+    ),
+  );
   const [arquivosPorLinha, setArquivosPorLinha] = useState<Record<string, File[]>>({});
   const [arquivosExistentes, setArquivosExistentes] = useState<ArquivoEscalaResumo[]>(
     inicial?.arquivos ?? [],
@@ -263,7 +264,6 @@ export function EscalaManualForm({
           body: JSON.stringify({
             titulo,
             diaEnsaio,
-            engenheiroSomId,
             data,
             especial,
             blocos: limpos,
@@ -317,35 +317,14 @@ export function EscalaManualForm({
           />
         </Campo>
       </div>
-      <div className="grid gap-4">
-        <Campo label="Dia do Ensaio">
-          <input
-            className="field"
-            value={diaEnsaio}
-            onChange={(e) => setDiaEnsaio(e.target.value)}
-            placeholder="Ex.: quinta 16/10 às 19h"
-          />
-        </Campo>
-        <Campo label="Engenheiro de Som">
-          <select
-            className="field"
-            value={engenheiroSomId}
-            onChange={(e) => setEngenheiroSomId(e.target.value)}
-          >
-            <option value="">Sem engenheiro de som</option>
-            {pessoasEngenheiros.map((pessoa) => (
-              <option key={pessoa.id} value={pessoa.id}>
-                {pessoa.nome}
-              </option>
-            ))}
-          </select>
-          {pessoasEngenheiros.length === 0 ? (
-            <p className="mt-1 text-xs text-muted">
-              Cadastre o membro com o perfil Engenheiro de som ou com a função Engenheiro de Som.
-            </p>
-          ) : null}
-        </Campo>
-      </div>
+      <Campo label="Dia do Ensaio">
+        <input
+          className="field"
+          value={diaEnsaio}
+          onChange={(e) => setDiaEnsaio(e.target.value)}
+          placeholder="Ex.: quinta 16/10 às 19h"
+        />
+      </Campo>
       <label className="flex items-center gap-2 text-sm">
         <input
           type="checkbox"
@@ -363,7 +342,7 @@ export function EscalaManualForm({
 
       {blocos.map((bloco, indice) => (
         <div key={indice} className="rounded-2xl border border-line p-4">
-          <div className="mb-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+          <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">
             <Campo label="Culto / bloco">
               <input
                 className="field"
@@ -378,6 +357,22 @@ export function EscalaManualForm({
                 onChange={(e) => atualizarBloco(indice, { direcao: e.target.value })}
                 placeholder="Quem dirige este culto"
               />
+            </Campo>
+            <Campo label="Engenheiro de Som">
+              <select
+                className="field"
+                value={bloco.engenheiroSomId}
+                onChange={(e) =>
+                  atualizarBloco(indice, { engenheiroSomId: e.target.value })
+                }
+              >
+                <option value="">Sem engenheiro de som</option>
+                {pessoasEngenheiros.map((pessoa) => (
+                  <option key={pessoa.id} value={pessoa.id}>
+                    {pessoa.nome}
+                  </option>
+                ))}
+              </select>
             </Campo>
             {blocos.length > 1 ? (
               <Botao
@@ -449,6 +444,7 @@ export function EscalaManualForm({
             {
               nome: `CULTO ${atual.length + 1}`,
               direcao: "",
+              engenheiroSomId: "",
               alocacoes: [
                 {
                   integranteId: "",

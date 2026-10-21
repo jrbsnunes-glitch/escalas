@@ -32,6 +32,7 @@ export const includeEscala = {
   arquivos: { orderBy: [{ ordem: "asc" as const }, { createdAt: "asc" as const }] },
   blocos: {
     include: {
+      engenheiroSom: { include: { funcoes: { include: { funcao: true } } } },
       alocacoes: {
         include: {
           integrante: { include: { funcoes: { include: { funcao: true } } } },
@@ -67,12 +68,18 @@ export function serializarEscala(escala: EscalaComInclude): EscalaDetalhe {
     }
   }
 
+  const blocosOrdenados = escala.blocos.slice().sort((a, b) => a.ordem - b.ordem);
+  const engenheiroEscala =
+    escala.engenheiroSom ??
+    blocosOrdenados.map((bloco) => bloco.engenheiroSom).find(Boolean) ??
+    null;
+
   return {
     id: escala.id,
     titulo: escala.titulo,
     diaEnsaio: escala.diaEnsaio ?? "",
-    engenheiroSom: escala.engenheiroSom
-      ? serializarIntegrante(escala.engenheiroSom)
+    engenheiroSom: engenheiroEscala
+      ? serializarIntegrante(engenheiroEscala)
       : null,
     data: escala.data.toISOString(),
     tipo: escala.tipo as EscalaDetalhe["tipo"],
@@ -92,13 +99,15 @@ export function serializarEscala(escala: EscalaComInclude): EscalaDetalhe {
         path: urlDownloadArquivo(escala.id, arquivo.id),
         musicaId: arquivo.musicaId ?? null,
       })),
-    blocos: escala.blocos
-      .slice()
-      .sort((a, b) => a.ordem - b.ordem)
-      .map((bloco) => ({
+    blocos: blocosOrdenados.map((bloco) => ({
         id: bloco.id,
         nome: bloco.nome,
         direcao: bloco.direcao ?? "",
+        engenheiroSom: bloco.engenheiroSom
+          ? serializarIntegrante(bloco.engenheiroSom)
+          : escala.engenheiroSom
+            ? serializarIntegrante(escala.engenheiroSom)
+            : null,
         ordem: bloco.ordem,
         temAncora: bloco.temAncora,
         temHomem: bloco.temHomem,

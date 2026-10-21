@@ -91,6 +91,7 @@ export type BlocoResumo = {
   id: string;
   nome: string;
   direcao: string;
+  engenheiroSom: IntegranteResumo | null;
   ordem: number;
   temAncora: boolean;
   temHomem: boolean;

@@ -7,7 +7,7 @@ import {
   recusarSeNaoAutenticado,
   validarSessaoApi,
 } from "@/lib/acesso";
-import { resolverEngenheiroSomId } from "@/lib/engenheiro-som";
+import { resolverEngenheirosSom } from "@/lib/engenheiro-som";
 import { includeEscala, serializarEscala } from "@/lib/serializers";
 import { configPadrao, recalcularBloco } from "@/lib/algoritmo";
 import { cookies } from "next/headers";
@@ -23,6 +23,7 @@ type LinhaManual = {
 type BlocoManual = {
   nome: string;
   direcao?: string;
+  engenheiroSomId?: string | null;
   alocacoes: LinhaManual[];
 };
 
@@ -57,12 +58,14 @@ export async function POST(request: Request) {
   const corpo = await request.json();
   const titulo = String(corpo.titulo ?? "").trim();
   const diaEnsaio = String(corpo.diaEnsaio ?? "").trim();
-  const engenheiro = await resolverEngenheiroSomId(corpo.engenheiroSomId);
-  if (!engenheiro.ok) {
-    return NextResponse.json({ erro: engenheiro.erro }, { status: 400 });
-  }
   const dataTexto = String(corpo.data ?? "");
   const blocos: BlocoManual[] = Array.isArray(corpo.blocos) ? corpo.blocos : [];
+  const engenheiros = await resolverEngenheirosSom(
+    blocos.map((bloco) => bloco.engenheiroSomId),
+  );
+  if (!engenheiros.ok) {
+    return NextResponse.json({ erro: engenheiros.erro }, { status: 400 });
+  }
 
   if (!titulo || !dataTexto) {
     return NextResponse.json(
@@ -91,7 +94,7 @@ export async function POST(request: Request) {
     data: {
       titulo,
       diaEnsaio,
-      engenheiroSomId: engenheiro.id,
+      engenheiroSomId: engenheiros.ids.find(Boolean) ?? null,
       data: new Date(`${dataTexto}T12:00:00.000Z`),
       tipo: "MANUAL",
       especial: Boolean(corpo.especial),
@@ -113,6 +116,7 @@ export async function POST(request: Request) {
           return {
             nome: String(bloco.nome || `CULTO ${indice + 1}`).toUpperCase(),
             direcao: String(bloco.direcao ?? "").trim(),
+            engenheiroSomId: engenheiros.ids[indice] ?? null,
             ordem: indice,
             ...m,
             alocacoes: {

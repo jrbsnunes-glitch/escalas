@@ -7,7 +7,7 @@ import {
   recusarSeNaoAutenticado,
   validarSessaoApi,
 } from "@/lib/acesso";
-import { resolverEngenheiroSomId } from "@/lib/engenheiro-som";
+import { resolverEngenheirosSom } from "@/lib/engenheiro-som";
 import { includeEscala, serializarEscala } from "@/lib/serializers";
 import { configPadrao, recalcularBloco } from "@/lib/algoritmo";
 import type { ConfigGeracao } from "@/lib/types";
@@ -63,12 +63,15 @@ export async function PATCH(
     }
   }
 
-  const engenheiro =
-    corpo.engenheiroSomId !== undefined
-      ? await resolverEngenheiroSomId(corpo.engenheiroSomId)
-      : null;
-  if (engenheiro && !engenheiro.ok) {
-    return NextResponse.json({ erro: engenheiro.erro }, { status: 400 });
+  const engenheiros = Array.isArray(corpo.blocos)
+    ? await resolverEngenheirosSom(
+        corpo.blocos.map(
+          (bloco: { engenheiroSomId?: string | null }) => bloco.engenheiroSomId,
+        ),
+      )
+    : { ok: true as const, ids: [] as (string | null)[] };
+  if (!engenheiros.ok) {
+    return NextResponse.json({ erro: engenheiros.erro }, { status: 400 });
   }
 
   if (Array.isArray(corpo.blocos)) {
@@ -92,7 +95,7 @@ export async function PATCH(
         titulo: corpo.titulo !== undefined ? String(corpo.titulo) : undefined,
         diaEnsaio:
           corpo.diaEnsaio !== undefined ? String(corpo.diaEnsaio).trim() : undefined,
-        engenheiroSomId: engenheiro ? engenheiro.id : undefined,
+        engenheiroSomId: engenheiros.ids.find(Boolean) ?? null,
         data: corpo.data ? new Date(`${corpo.data}T12:00:00.000Z`) : undefined,
         especial:
           corpo.especial !== undefined ? Boolean(corpo.especial) : undefined,
@@ -102,6 +105,7 @@ export async function PATCH(
               bloco: {
                 nome: string;
                 direcao?: string;
+                engenheiroSomId?: string | null;
                 alocacoes?: {
                   integranteId: string;
                   funcaoId?: string | null;
@@ -127,6 +131,7 @@ export async function PATCH(
               return {
                 nome: String(bloco.nome || `BLOCO ${indice + 1}`).toUpperCase(),
                 direcao: String(bloco.direcao ?? "").trim(),
+                engenheiroSomId: engenheiros.ids[indice] ?? null,
                 ordem: indice,
                 ...m,
                 alocacoes: {
@@ -152,7 +157,6 @@ export async function PATCH(
         titulo: corpo.titulo !== undefined ? String(corpo.titulo) : undefined,
         diaEnsaio:
           corpo.diaEnsaio !== undefined ? String(corpo.diaEnsaio).trim() : undefined,
-        engenheiroSomId: engenheiro ? engenheiro.id : undefined,
         data: corpo.data ? new Date(`${corpo.data}T12:00:00.000Z`) : undefined,
         especial:
           corpo.especial !== undefined ? Boolean(corpo.especial) : undefined,

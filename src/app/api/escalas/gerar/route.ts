@@ -81,6 +81,7 @@ export async function POST(request: Request) {
       blocos: {
         create: resultado.blocos.map((bloco) => ({
           nome: bloco.nome,
+          engenheiroSomId: engenheiro.id,
           ordem: bloco.ordem,
           temAncora: bloco.temAncora,
           temHomem: bloco.temHomem,
