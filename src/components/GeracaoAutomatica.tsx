@@ -154,6 +154,11 @@ export function GeracaoAutomatica({
               </option>
             ))}
           </select>
+          {pessoasEngenheiros.length === 0 ? (
+            <p className="mt-1 text-xs text-muted">
+              Só entra quem está cadastrado com o perfil Engenheiro de som.
+            </p>
+          ) : null}
         </Campo>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">

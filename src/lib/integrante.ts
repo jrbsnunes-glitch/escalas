@@ -35,12 +35,16 @@ export function ehPerfilEngenheiroSom(perfil: string) {
 
 export function ehIntegranteEngenheiroSom(pessoa: {
   perfil: string;
-  funcoes: { nome: string }[];
+  funcoes?: { nome: string }[];
 }) {
-  return (
-    ehPerfilEngenheiroSom(pessoa.perfil) ||
-    pessoa.funcoes.some((funcao) => ehFuncaoEngenheiroSom(funcao.nome))
-  );
+  return ehPerfilEngenheiroSom(pessoa.perfil);
+}
+
+export function ehFuncaoDeMusico(funcao: { nome: string; grupo: string }) {
+  if (funcao.grupo === "ENGENHEIRO" || ehFuncaoEngenheiroSom(funcao.nome)) {
+    return false;
+  }
+  return funcao.grupo === "MUSICO";
 }
 
 export function rotuloPerfilMinisterio(perfil: string) {

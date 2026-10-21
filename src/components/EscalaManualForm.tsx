@@ -9,7 +9,11 @@ import { Botao, BotaoLink, Campo } from "./ui";
 import { arquivosDaMusica, arquivosSemMusica } from "@/lib/arquivo-escala-ui";
 import { enviarArquivosEscala } from "@/lib/enviar-arquivos-escala";
 import { cabecalhoEscala, rotuloSessao } from "@/lib/escala";
-import { ehIntegranteEngenheiroSom } from "@/lib/integrante";
+import {
+  ehFuncaoDeMusico,
+  ehFuncaoEngenheiroSom,
+  ehIntegranteEngenheiroSom,
+} from "@/lib/integrante";
 import type {
   ArquivoEscalaResumo,
   IntegranteResumo,
@@ -27,12 +31,18 @@ type Linha = {
 };
 type Bloco = { nome: string; direcao: string; alocacoes: Linha[] };
 
-function primeiraFuncao(funcoes: Funcao[], sessao: SessaoEscala) {
-  return (
-    funcoes.find((item) => item.grupo === sessao)?.id ??
-    funcoes[0]?.id ??
-    ""
+function funcoesDaSessao(funcoes: Funcao[], sessao: SessaoEscala) {
+  if (sessao === "MUSICO") {
+    return funcoes.filter(ehFuncaoDeMusico);
+  }
+  return funcoes.filter(
+    (item) => item.grupo === "CANTOR" && !ehFuncaoEngenheiroSom(item.nome),
   );
+}
+
+function primeiraFuncao(funcoes: Funcao[], sessao: SessaoEscala) {
+  const daSessao = funcoesDaSessao(funcoes, sessao);
+  return daSessao[0]?.id ?? "";
 }
 
 export function EscalaManualForm({
@@ -105,8 +115,8 @@ export function EscalaManualForm({
   const [enviando, setEnviando] = useState(false);
   const [progresso, setProgresso] = useState("");
 
-  const funcoesMusicos = funcoes.filter((item) => item.grupo === "MUSICO");
-  const funcoesCantores = funcoes.filter((item) => item.grupo === "CANTOR");
+  const funcoesMusicos = funcoesDaSessao(funcoes, "MUSICO");
+  const funcoesCantores = funcoesDaSessao(funcoes, "CANTOR");
 
   const pessoasMusicos = useMemo(
     () =>
@@ -114,7 +124,7 @@ export function EscalaManualForm({
         (pessoa) =>
           pessoa.perfil === "MUSICO" ||
           pessoa.perfil === "AMBOS" ||
-          pessoa.funcoes.some((funcao) => funcao.grupo === "MUSICO"),
+          pessoa.funcoes.some(ehFuncaoDeMusico),
       ),
     [integrantes],
   );
@@ -301,6 +311,11 @@ export function EscalaManualForm({
               </option>
             ))}
           </select>
+          {pessoasEngenheiros.length === 0 ? (
+            <p className="mt-1 text-xs text-muted">
+              Só entra quem está cadastrado com o perfil Engenheiro de som.
+            </p>
+          ) : null}
         </Campo>
       </div>
       <label className="flex items-center gap-2 text-sm">
@@ -354,8 +369,8 @@ export function EscalaManualForm({
             sessao="MUSICO"
             bloco={bloco}
             blocoIndice={indice}
-            funcoes={funcoesMusicos.length ? funcoesMusicos : funcoes}
-            pessoas={pessoasMusicos.length ? pessoasMusicos : integrantes}
+            funcoes={funcoesMusicos}
+            pessoas={pessoasMusicos}
             musicas={musicas}
             onChangeLinha={atualizarLinha}
             onRemoveLinha={(linhaIndice) =>
@@ -371,8 +386,8 @@ export function EscalaManualForm({
             sessao="CANTOR"
             bloco={bloco}
             blocoIndice={indice}
-            funcoes={funcoesCantores.length ? funcoesCantores : funcoes}
-            pessoas={pessoasCantores.length ? pessoasCantores : integrantes}
+            funcoes={funcoesCantores}
+            pessoas={pessoasCantores}
             musicas={musicas}
             onChangeLinha={atualizarLinha}
             onRemoveLinha={(linhaIndice) =>
