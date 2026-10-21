@@ -37,7 +37,10 @@ export function ehIntegranteEngenheiroSom(pessoa: {
   perfil: string;
   funcoes?: { nome: string }[];
 }) {
-  return ehPerfilEngenheiroSom(pessoa.perfil);
+  return (
+    ehPerfilEngenheiroSom(pessoa.perfil) ||
+    (pessoa.funcoes ?? []).some((funcao) => ehFuncaoEngenheiroSom(funcao.nome))
+  );
 }
 
 export function ehFuncaoMontagemEngenheiro(funcao: {

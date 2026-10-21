@@ -341,7 +341,7 @@ export function EscalaManualForm({
           </select>
           {pessoasEngenheiros.length === 0 ? (
             <p className="mt-1 text-xs text-muted">
-              Só entra quem está cadastrado com o perfil Engenheiro de som.
+              Cadastre o membro com o perfil Engenheiro de som ou com a função Engenheiro de Som.
             </p>
           ) : null}
         </Campo>
