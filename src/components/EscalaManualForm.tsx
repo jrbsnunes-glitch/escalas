@@ -279,28 +279,30 @@ export function EscalaManualForm({
           />
         </Campo>
       </div>
-      <Campo label="Dia do Ensaio">
-        <input
-          className="field"
-          value={diaEnsaio}
-          onChange={(e) => setDiaEnsaio(e.target.value)}
-          placeholder="Ex.: quinta 16/10 às 19h"
-        />
-      </Campo>
-      <Campo label="Engenheiro de Som">
-        <select
-          className="field"
-          value={engenheiroSomId}
-          onChange={(e) => setEngenheiroSomId(e.target.value)}
-        >
-          <option value="">Sem engenheiro de som</option>
-          {pessoasEngenheiros.map((pessoa) => (
-            <option key={pessoa.id} value={pessoa.id}>
-              {pessoa.nome}
-            </option>
-          ))}
-        </select>
-      </Campo>
+      <div className="grid gap-4">
+        <Campo label="Dia do Ensaio">
+          <input
+            className="field"
+            value={diaEnsaio}
+            onChange={(e) => setDiaEnsaio(e.target.value)}
+            placeholder="Ex.: quinta 16/10 às 19h"
+          />
+        </Campo>
+        <Campo label="Engenheiro de Som">
+          <select
+            className="field"
+            value={engenheiroSomId}
+            onChange={(e) => setEngenheiroSomId(e.target.value)}
+          >
+            <option value="">Sem engenheiro de som</option>
+            {pessoasEngenheiros.map((pessoa) => (
+              <option key={pessoa.id} value={pessoa.id}>
+                {pessoa.nome}
+              </option>
+            ))}
+          </select>
+        </Campo>
+      </div>
       <label className="flex items-center gap-2 text-sm">
         <input
           type="checkbox"
